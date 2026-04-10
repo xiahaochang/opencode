@@ -41,22 +41,16 @@ jobs:
 
       - uses: ./.github/actions/setup-bun
 
-      - name: Setup git committer
-        id: committer
-        uses: ./.github/actions/setup-git-committer
-        with:
-          opencode-app-id: ${{ vars.OPENCODE_APP_ID }}
-          opencode-app-secret: ${{ secrets.OPENCODE_APP_SECRET }}
-
-      - name: Install OpenCode
-        if: inputs.bump || inputs.version
-        run: bun i -g opencode-ai
+      - name: Setup git user
+        run: |
+          git config --global user.email "github-actions@github.com"
+          git config --global user.name "github-actions"
 
       - id: version
         run: |
           ./script/version.ts
         env:
-          GH_TOKEN: ${{ steps.committer.outputs.token }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
           OPENCODE_BUMP: ${{ inputs.bump }}
           OPENCODE_VERSION: ${{ inputs.version }}
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
@@ -78,12 +72,10 @@ jobs:
 
       - uses: ./.github/actions/setup-bun
 
-      - name: Setup git committer
-        id: committer
-        uses: ./.github/actions/setup-git-committer
-        with:
-          opencode-app-id: ${{ vars.OPENCODE_APP_ID }}
-          opencode-app-secret: ${{ secrets.OPENCODE_APP_SECRET }}
+      - name: Setup git user
+        run: |
+          git config --global user.email "github-actions@github.com"
+          git config --global user.name "github-actions"
 
       - name: Build
         id: build
@@ -93,7 +85,7 @@ jobs:
           OPENCODE_VERSION: ${{ needs.version.outputs.version }}
           OPENCODE_RELEASE: ${{ needs.version.outputs.release }}
           GH_REPO: ${{ needs.version.outputs.repo }}
-          GH_TOKEN: ${{ steps.committer.outputs.token }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - uses: actions/upload-artifact@v4
         with:
@@ -130,12 +122,10 @@ jobs:
           name: opencode-cli-windows
           path: packages/opencode/dist
 
-      - name: Setup git committer
-        id: committer
-        uses: ./.github/actions/setup-git-committer
-        with:
-          opencode-app-id: ${{ vars.OPENCODE_APP_ID }}
-          opencode-app-secret: ${{ secrets.OPENCODE_APP_SECRET }}
+      - name: Setup git user
+        run: |
+          git config --global user.email "github-actions@github.com"
+          git config --global user.name "github-actions"
 
       - name: Azure login
         uses: azure/login@v2
@@ -192,7 +182,7 @@ jobs:
         if: needs.version.outputs.release != ''
         shell: pwsh
         env:
-          GH_TOKEN: ${{ steps.committer.outputs.token }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           gh release upload "v${{ needs.version.outputs.version }}" `
             "${{ github.workspace }}\packages\opencode\dist\opencode-windows-arm64.zip" `
@@ -200,6 +190,8 @@ jobs:
             "${{ github.workspace }}\packages\opencode\dist\opencode-windows-x64-baseline.zip" `
             --clobber `
             --repo "${{ needs.version.outputs.repo }}"
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - uses: actions/upload-artifact@v4
         with:
@@ -312,7 +304,7 @@ jobs:
           bun ./scripts/prepare.ts
         env:
           OPENCODE_VERSION: ${{ needs.version.outputs.version }}
-          GITHUB_TOKEN: ${{ steps.committer.outputs.token }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           OPENCODE_CLI_ARTIFACT: ${{ (runner.os == 'Windows' && 'opencode-cli-windows') || 'opencode-cli' }}
           RUST_TARGET: ${{ matrix.settings.target }}
           GH_TOKEN: ${{ github.token }}
@@ -336,12 +328,10 @@ jobs:
         if: contains(matrix.settings.host, 'ubuntu')
         run: cargo tauri --version
 
-      - name: Setup git committer
-        id: committer
-        uses: ./.github/actions/setup-git-committer
-        with:
-          opencode-app-id: ${{ vars.OPENCODE_APP_ID }}
-          opencode-app-secret: ${{ secrets.OPENCODE_APP_SECRET }}
+      - name: Setup git user
+        run: |
+          git config --global user.email "github-actions@github.com"
+          git config --global user.name "github-actions"
 
       - name: Build and upload artifacts
         uses: tauri-apps/tauri-action@390cbe447412ced1303d35abe75287949e43437a
@@ -359,7 +349,7 @@ jobs:
           repo: ${{ (github.ref_name == 'beta' && 'opencode-beta') || '' }}
           releaseCommitish: ${{ github.sha }}
         env:
-          GITHUB_TOKEN: ${{ steps.committer.outputs.token }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           TAURI_BUNDLER_NEW_APPIMAGE_FORMAT: true
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
@@ -468,12 +458,10 @@ jobs:
           sudo apt-get install -y --no-install-recommends -o dir::cache::archives="$HOME/apt-cache" rpm
           sudo chmod -R a+rw ~/apt-cache
 
-      - name: Setup git committer
-        id: committer
-        uses: ./.github/actions/setup-git-committer
-        with:
-          opencode-app-id: ${{ vars.OPENCODE_APP_ID }}
-          opencode-app-secret: ${{ secrets.OPENCODE_APP_SECRET }}
+      - name: Setup git user
+        run: |
+          git config --global user.email "github-actions@github.com"
+          git config --global user.name "github-actions"
 
       - name: Prepare
         run: bun ./scripts/prepare.ts
@@ -499,7 +487,7 @@ jobs:
         timeout-minutes: 60
         env:
           OPENCODE_CHANNEL: ${{ (github.ref_name == 'beta' && 'beta') || 'prod' }}
-          GH_TOKEN: ${{ steps.committer.outputs.token }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
           CSC_LINK: ${{ secrets.APPLE_CERTIFICATE }}
           CSC_KEY_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
           APPLE_API_KEY: ${{ runner.temp }}/apple-api-key.p8
@@ -573,12 +561,10 @@ jobs:
           node-version: "24"
           registry-url: "https://registry.npmjs.org"
 
-      - name: Setup git committer
-        id: committer
-        uses: ./.github/actions/setup-git-committer
-        with:
-          opencode-app-id: ${{ vars.OPENCODE_APP_ID }}
-          opencode-app-secret: ${{ secrets.OPENCODE_APP_SECRET }}
+      - name: Setup git user
+        run: |
+          git config --global user.email "github-actions@github.com"
+          git config --global user.name "github-actions"
 
       - uses: actions/download-artifact@v4
         with:
@@ -626,7 +612,7 @@ jobs:
           OPENCODE_VERSION: ${{ needs.version.outputs.version }}
           OPENCODE_RELEASE: ${{ needs.version.outputs.release }}
           AUR_KEY: ${{ secrets.AUR_KEY }}
-          GITHUB_TOKEN: ${{ steps.committer.outputs.token }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           GH_REPO: ${{ needs.version.outputs.repo }}
           NPM_CONFIG_PROVENANCE: false
           LATEST_YML_DIR: /tmp/latest-yml

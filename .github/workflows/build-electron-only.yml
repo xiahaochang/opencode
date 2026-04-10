@@ -1,0 +1,58 @@
+name: build-electron-only
+run-name: "Build Electron packages"
+
+on:
+  workflow_dispatch:
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+permissions:
+  contents: read
+
+jobs:
+  build-electron:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+            platform_flag: --linux
+          - os: windows-2025
+            target: x86_64-pc-windows-msvc
+            platform_flag: --win
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install apt deps (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y rpm
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build app
+        run: bun run --cwd packages/app build
+
+      - name: Package Electron
+        run: npx electron-builder ${{ matrix.platform_flag }} --publish never --config electron-builder.config.ts
+        working-directory: packages/desktop-electron
+        timeout-minutes: 60
+        env:
+          OPENCODE_CHANNEL: prod
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: opencode-electron-${{ matrix.os }}
+          path: packages/desktop-electron/dist/
