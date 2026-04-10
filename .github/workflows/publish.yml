@@ -45,13 +45,26 @@ jobs:
       - name: Install dependencies
         run: bun install
 
+      - name: Build OpenCode CLI
+        run: bun script/build-node.ts
+        working-directory: packages/opencode
+
       - name: Prepare Desktop App
         run: bun ./scripts/prepare.ts
         working-directory: packages/desktop-electron
 
-      - name: Build App
-        run: bun run build
+      - name: Build Electron App
+        run: bunx electron-vite build
         working-directory: packages/desktop-electron
+
+      - name: Verify Build Output
+        run: |
+          if [ ! -f "packages/desktop-electron/out/main/index.js" ]; then
+            echo "Build failed: out/main/index.js not found"
+            ls -R packages/desktop-electron/out
+            exit 1
+          fi
+        shell: bash
 
       - name: Package Electron
         run: npx electron-builder ${{ matrix.platform_flag }} --publish never --config electron-builder.config.ts
