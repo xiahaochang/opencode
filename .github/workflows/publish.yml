@@ -100,7 +100,7 @@ jobs:
           ls -R app/
 
       - name: Package Electron
-        run: npx electron-builder ${{ matrix.platform_flag }} --publish never --config electron-builder.config.ts --config.asar=false --projectDir=./app
+        run: npx electron-builder ${{ matrix.platform_flag }} --publish never --config electron-builder.config.ts --config.asar=false
         working-directory: packages/desktop-electron
         timeout-minutes: 60
         env:
