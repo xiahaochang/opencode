@@ -54,39 +54,60 @@ jobs:
         working-directory: packages/desktop-electron
 
       - name: Build Electron App
-        run: bun run build
+        run: |
+          # Clean build output to avoid stale files
+          rm -rf out || true
+          bun run build
         working-directory: packages/desktop-electron
+        shell: bash
 
       - name: Verify Build Output
         working-directory: packages/desktop-electron
         shell: bash
         run: |
           echo "=== Checking output directory ==="
-          ls -la out/main/
+          if [ ! -d "out" ]; then
+            echo "Error: 'out' directory does not exist!"
+            exit 1
+          fi
           
           if [ ! -f "out/main/index.js" ]; then
-            echo "Error: Build output 'out/main/index.js' is missing!"
+            echo "Error: 'out/main/index.js' is missing!"
             echo "=== Full output tree ==="
             ls -R out/
             exit 1
           fi
           
-          echo "=== File size check ==="
-          size=$(wc -c < out/main/index.js)
-          echo "File size: $size bytes"
-          if [ "$size" -eq 0 ]; then
-            echo "Error: out/main/index.js is empty!"
-            exit 1
-          fi
+          echo "=== File details ==="
+          ls -la out/main/index.js
+          echo "=== Content preview (first 10 lines) ==="
+          head -n 10 out/main/index.js
+          
+          # Remove .gitignore files to ensure electron-builder packs everything
+          # electron-builder sometimes ignores files listed in .gitignore even if specified in 'files'
+          find . -name ".gitignore" -type f -delete
+          echo "Removed .gitignore files to ensure packing"
+
+      - name: Prepare App Directory
+        working-directory: packages/desktop-electron
+        shell: bash
+        run: |
+          mkdir -p app
+          cp -r out app/
+          cp -r resources app/
+          cp package.json app/
+          echo "Copied build output to app/ directory"
+          ls -R app/
 
       - name: Package Electron
-        run: npx electron-builder ${{ matrix.platform_flag }} --publish never --config electron-builder.config.ts
+        run: npx electron-builder ${{ matrix.platform_flag }} --publish never --config electron-builder.config.ts --config.asar=false --appDir=./app
         working-directory: packages/desktop-electron
         timeout-minutes: 60
         env:
           OPENCODE_CHANNEL: prod
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
         with:
           name: opencode-electron-${{ matrix.os }}
-          path: packages/desktop-electron/dist/
+          path: packages/desktop-electron/app/dist/
