@@ -88,17 +88,6 @@ jobs:
           find . -name ".gitignore" -type f -delete
           echo "Removed .gitignore files to ensure packing"
 
-      - name: Prepare App Directory
-        working-directory: packages/desktop-electron
-        shell: bash
-        run: |
-          mkdir -p app
-          cp -r out app/
-          cp -r resources app/
-          cp package.json app/
-          echo "Copied build output to app/ directory"
-          ls -R app/
-
       - name: Package Electron
         run: npx electron-builder ${{ matrix.platform_flag }} --publish never --config electron-builder.config.ts --config.asar=false
         working-directory: packages/desktop-electron
@@ -110,4 +99,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: opencode-electron-${{ matrix.os }}
-          path: packages/desktop-electron/app/dist/
+          path: packages/desktop-electron/dist/
