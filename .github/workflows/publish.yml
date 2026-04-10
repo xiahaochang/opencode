@@ -54,16 +54,30 @@ jobs:
         working-directory: packages/desktop-electron
 
       - name: Build Electron App
-        run: bunx electron-vite build
+        run: |
+          # Clean previous build output to ensure fresh build
+          rm -rf out
+          # Run build
+          bun run build
         working-directory: packages/desktop-electron
 
       - name: Verify Build Output
         run: |
-          if [ ! -f "packages/desktop-electron/out/main/index.js" ]; then
-            echo "Build failed: out/main/index.js not found"
-            ls -R packages/desktop-electron/out
+          echo "=== Checking output directory ==="
+          ls -la out/main/
+          
+          if [ ! -f "out/main/index.js" ]; then
+            echo "Error: Build output 'out/main/index.js' is missing!"
+            echo "=== Full output tree ==="
+            ls -R out/
             exit 1
           fi
+          
+          echo "=== File info ==="
+          stat out/main/index.js || file out/main/index.js
+          echo "=== Content preview ==="
+          head -n 5 out/main/index.js
+        working-directory: packages/desktop-electron
         shell: bash
 
       - name: Package Electron
