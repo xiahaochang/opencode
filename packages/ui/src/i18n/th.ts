@@ -118,6 +118,8 @@ export const dict = {
   "ui.common.close": "ปิด",
   "ui.common.next": "ถัดไป",
   "ui.common.submit": "ส่ง",
+  "ui.common.renderMarkdown": "แสดง",
+  "ui.common.showSource": "ต้นฉบับ",
 
   "ui.permission.deny": "ปฏิเสธ",
   "ui.permission.allowAlways": "อนุญาตเสมอ",

@@ -121,6 +121,8 @@ export const dict = {
   "ui.common.close": "关闭",
   "ui.common.next": "下一步",
   "ui.common.submit": "提交",
+  "ui.common.renderMarkdown": "渲染",
+  "ui.common.showSource": "源码",
 
   "ui.permission.deny": "拒绝",
   "ui.permission.allowAlways": "始终允许",

@@ -117,6 +117,8 @@ export const dict = {
   "ui.common.close": "Fermer",
   "ui.common.next": "Suivant",
   "ui.common.submit": "Soumettre",
+  "ui.common.renderMarkdown": "Aperçu",
+  "ui.common.showSource": "Source",
 
   "ui.permission.deny": "Refuser",
   "ui.permission.allowAlways": "Toujours autoriser",

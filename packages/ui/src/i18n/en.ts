@@ -135,6 +135,8 @@ export const dict: Record<string, string> = {
   "ui.common.close": "Close",
   "ui.common.next": "Next",
   "ui.common.submit": "Submit",
+  "ui.common.renderMarkdown": "Render Markdown",
+  "ui.common.showSource": "Show Source",
 
   "ui.permission.deny": "Deny",
   "ui.permission.allowAlways": "Allow always",

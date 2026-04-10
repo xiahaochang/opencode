@@ -121,6 +121,8 @@ export const dict = {
   "ui.common.close": "Zatvori",
   "ui.common.next": "Dalje",
   "ui.common.submit": "Pošalji",
+  "ui.common.renderMarkdown": "Prikaz",
+  "ui.common.showSource": "Izvor",
 
   "ui.permission.deny": "Zabrani",
   "ui.permission.allowAlways": "Uvijek dozvoli",

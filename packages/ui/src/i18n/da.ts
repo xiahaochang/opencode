@@ -116,6 +116,8 @@ export const dict = {
   "ui.common.close": "Luk",
   "ui.common.next": "Næste",
   "ui.common.submit": "Indsend",
+  "ui.common.renderMarkdown": "Vis",
+  "ui.common.showSource": "Kilde",
 
   "ui.permission.deny": "Afvis",
   "ui.permission.allowAlways": "Tillad altid",

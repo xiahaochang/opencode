@@ -116,6 +116,8 @@ export const dict = {
   "ui.common.close": "閉じる",
   "ui.common.next": "次へ",
   "ui.common.submit": "送信",
+  "ui.common.renderMarkdown": "表示",
+  "ui.common.showSource": "ソース",
 
   "ui.permission.deny": "拒否",
   "ui.permission.allowAlways": "常に許可",

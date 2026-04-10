@@ -120,6 +120,8 @@ export const dict: Record<Keys, string> = {
   "ui.common.close": "Lukk",
   "ui.common.next": "Neste",
   "ui.common.submit": "Send inn",
+  "ui.common.renderMarkdown": "Vis",
+  "ui.common.showSource": "Kilde",
 
   "ui.permission.deny": "Avslå",
   "ui.permission.allowAlways": "Tillat alltid",
