@@ -54,14 +54,12 @@ jobs:
         working-directory: packages/desktop-electron
 
       - name: Build Electron App
-        run: |
-          # Clean previous build output to ensure fresh build
-          rm -rf out
-          # Run build
-          bun run build
+        run: bun run build
         working-directory: packages/desktop-electron
 
       - name: Verify Build Output
+        working-directory: packages/desktop-electron
+        shell: bash
         run: |
           echo "=== Checking output directory ==="
           ls -la out/main/
@@ -73,12 +71,13 @@ jobs:
             exit 1
           fi
           
-          echo "=== File info ==="
-          stat out/main/index.js || file out/main/index.js
-          echo "=== Content preview ==="
-          head -n 5 out/main/index.js
-        working-directory: packages/desktop-electron
-        shell: bash
+          echo "=== File size check ==="
+          size=$(wc -c < out/main/index.js)
+          echo "File size: $size bytes"
+          if [ "$size" -eq 0 ]; then
+            echo "Error: out/main/index.js is empty!"
+            exit 1
+          fi
 
       - name: Package Electron
         run: npx electron-builder ${{ matrix.platform_flag }} --publish never --config electron-builder.config.ts
