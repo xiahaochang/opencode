@@ -209,25 +209,10 @@ export function FileTabContent(props: { tab: string }) {
     return p.endsWith(".md") || p.endsWith(".markdown")
   })
 
-  const initialRenderState = () => {
-    const p = path()
-    if (!p) return false
-    const stored = localStorage.getItem(`md-render:${p}`)
-    return stored === "true"
-  }
-  const [renderMarkdown, setRenderMarkdown] = createSignal(initialRenderState())
-
-  createEffect(() => {
-    const p = path()
-    if (!p) return
-    localStorage.setItem(`md-render:${p}`, String(renderMarkdown()))
-  })
-
-  createEffect(
-    on(path, () => {
-      commentsUi.note.reset()
-      setRenderMarkdown(initialRenderState())
-    }),
+  // 渲染切换状态 (全局持久化，所有 Markdown 文件共享)
+  const [renderMarkdown, setRenderMarkdown] = makePersisted(
+    createSignal(false),
+    { name: "md-render-global", storage: localStorage }
   )
   const selectedLines = createMemo<SelectedLineRange | null>(() => {
     const p = path()
@@ -431,9 +416,9 @@ export function FileTabContent(props: { tab: string }) {
 
   const MarkdownToggleButton = () => (
     <Show when={isMarkdown()}>
-      <div class="absolute top-3 right-3 z-10 bg-bg-surface/90 border border-border-base rounded-lg p-1 shadow-md">
+      <div class="absolute top-3 right-3 z-50 flex items-center justify-center bg-bg-surface/90 border border-border-base rounded-lg w-7 h-7 shadow-md">
         <IconButton
-          icon={renderMarkdown() ? "eye" : "file-text"}
+          icon={renderMarkdown() ? "eye" : "code"}
           variant="ghost"
           size="small"
           onClick={() => setRenderMarkdown(!renderMarkdown())}
@@ -445,7 +430,6 @@ export function FileTabContent(props: { tab: string }) {
 
   const renderFile = (source: string) => (
     <div class="relative overflow-hidden pb-40">
-      <MarkdownToggleButton />
       <Switch>
         <Match when={renderMarkdown()}>
           <div class="px-6 py-4 pt-12">
@@ -501,6 +485,8 @@ export function FileTabContent(props: { tab: string }) {
 
   return (
     <Tabs.Content value={props.tab} class="mt-3 relative h-full">
+      {/* Markdown 渲染切换按钮 (固定在视口右上角) */}
+      <MarkdownToggleButton />
       <ScrollView class="h-full" viewportRef={scrollSync.setViewport} onScroll={scrollSync.handleScroll as any}>
         <Switch>
           <Match when={state()?.loaded}>{renderFile(contents())}</Match>
