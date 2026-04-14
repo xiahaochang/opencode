@@ -1,4 +1,4 @@
-name: publish
+name: publish-custom
 run-name: "Build Electron packages"
 
 on:
