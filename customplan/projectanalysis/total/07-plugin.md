@@ -17,20 +17,35 @@
 
 ---
 
-## 二、目录结构
+## 二、完整目录结构
 
 ```
 packages/plugin/
-├── src/
-│   ├── index.ts                 # 主入口
-│   ├── tool.ts                  # 工具定义
-│   ├── tui.ts                   # TUI 插件
-│   ├── types.ts                 # 类型定义
-│   └── ...
+├── .gitignore
+├── package.json
+├── sst-env.d.ts
+├── tsconfig.json
 │
-├── package.json                 # 包配置
-└── tsconfig.json                # TypeScript 配置
+├── script/
+│   └── publish.ts                                        # 发布脚本
+│
+└── src/
+    ├── index.ts                                          # 主入口
+    ├── example.ts                                        # 示例插件
+    ├── example-workspace.ts                              # 工作区示例
+    ├── shell.ts                                          # Shell 插件
+    ├── tool.ts                                           # 工具定义
+    └── tui.ts                                            # TUI 插件
 ```
+
+### 统计信息
+
+| 类别 | 数量 |
+|------|------|
+| 根文件 | 4 个 (.gitignore, package.json, sst-env.d.ts, tsconfig.json) |
+| script/ | 1 个发布脚本 |
+| src/ | 6 个源文件 |
+| **总计** | **11 个文件** |
 
 ---
 
@@ -46,18 +61,18 @@ packages/plugin/
 @opencode-ai/plugin
   │
   ├─ 主入口 (.)
-  │   └─ 插件 SDK 核心
+  │   └─ src/index.ts
   │      ├─ Plugin 类
   │      ├─ 类型定义
   │      └─ 工具函数
   │
   ├─ 工具入口 (./tool)
-  │   └─ 工具定义 SDK
+  │   └─ src/tool.ts
   │      ├─ Tool.define()
   │      └─ 工具类型
   │
   └─ TUI 入口 (./tui)
-      └─ TUI 插件 SDK
+      └─ src/tui.ts
          ├─ TUI 组件类型
          └─ TUI 钩子
 ```
@@ -77,9 +92,63 @@ packages/plugin/
 
 ---
 
-## 四、插件架构
+## 四、源文件分析
 
-### 4.1 插件类型
+### 4.1 src/index.ts - 主入口
+
+**职责**: 插件 SDK 核心导出
+
+**主要导出**:
+
+| 导出 | 类型 | 说明 |
+|------|------|------|
+| `Plugin` | 类/命名空间 | 插件核心 API |
+| `PluginSpec` | 接口 | 插件规范定义 |
+| `Hooks` | 类型 | 钩子类型定义 |
+
+### 4.2 src/tool.ts - 工具定义
+
+**职责**: 工具定义 SDK
+
+**主要导出**:
+
+| 导出 | 类型 | 说明 |
+|------|------|------|
+| `Tool` | 命名空间 | 工具定义工厂 |
+| `Tool.define()` | 函数 | 定义新工具 |
+| `ToolContext` | 接口 | 工具上下文 |
+| `ToolDef` | 接口 | 工具定义 |
+| `ToolResult` | 接口 | 工具结果 |
+
+### 4.3 src/tui.ts - TUI 插件
+
+**职责**: TUI 插件 SDK
+
+**主要导出**:
+
+| 导出 | 类型 | 说明 |
+|------|------|------|
+| `TUI` | 命名空间 | TUI 插件 API |
+| `createComponent()` | 函数 | 创建 TUI 组件 |
+| `registerHook()` | 函数 | 注册 TUI 钩子 |
+
+### 4.4 src/shell.ts - Shell 插件
+
+**职责**: Shell 相关插件功能
+
+### 4.5 src/example.ts - 示例插件
+
+**职责**: 插件开发示例代码
+
+### 4.6 src/example-workspace.ts - 工作区示例
+
+**职责**: 工作区插件示例
+
+---
+
+## 五、插件架构
+
+### 5.1 插件类型
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -107,7 +176,7 @@ Plugin Types
       └─ 扩展 TUI 界面
 ```
 
-### 4.2 插件生命周期
+### 5.2 插件生命周期
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -133,9 +202,9 @@ Plugin Types
 
 ---
 
-## 五、工具插件开发
+## 六、工具插件开发
 
-### 5.1 定义工具
+### 6.1 定义工具
 
 ```typescript
 import { Tool } from "@opencode-ai/plugin/tool"
@@ -159,7 +228,7 @@ export const MyTool = Tool.define("my_tool", {
 })
 ```
 
-### 5.2 工具参数
+### 6.2 工具参数
 
 ```typescript
 Tool.define(id, {
@@ -174,7 +243,7 @@ Tool.define(id, {
 })
 ```
 
-### 5.3 工具上下文
+### 6.3 工具上下文
 
 ```typescript
 // ctx 参数包含
@@ -188,9 +257,9 @@ interface ToolContext {
 
 ---
 
-## 六、TUI 插件开发
+## 七、TUI 插件开发
 
-### 6.1 TUI 组件
+### 7.1 TUI 组件
 
 ```typescript
 import { createComponent } from "@opencode-ai/plugin/tui"
@@ -202,7 +271,7 @@ export const MyComponent = createComponent(() => {
 })
 ```
 
-### 6.2 TUI 钩子
+### 7.2 TUI 钩子
 
 ```typescript
 import { registerHook } from "@opencode-ai/plugin/tui"
@@ -217,9 +286,9 @@ registerHook("tui.sidebar.items", () => {
 
 ---
 
-## 七、插件配置
+## 八、插件配置
 
-### 7.1 opencode.json 配置
+### 8.1 opencode.json 配置
 
 ```json
 {
@@ -230,7 +299,7 @@ registerHook("tui.sidebar.items", () => {
 }
 ```
 
-### 7.2 插件加载流程
+### 8.2 插件加载流程
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -255,9 +324,9 @@ Config.load()
 
 ---
 
-## 八、内置插件
+## 九、内置插件
 
-### 8.1 认证插件
+### 9.1 认证插件
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -273,7 +342,7 @@ opencode 核心包内置
   └─ CloudflarePlugins     → Cloudflare 认证
 ```
 
-### 8.2 插件 Hooks
+### 9.2 插件 Hooks
 
 ```typescript
 // 核心钩子列表
@@ -289,16 +358,14 @@ Hooks = {
   // 会话系统
   "session.created": (session) => void,
   "session.updated": (session) => void,
-  
-  // ... 更多钩子
 }
 ```
 
 ---
 
-## 九、插件开发示例
+## 十、插件开发示例
 
-### 9.1 完整示例
+### 10.1 完整示例 (src/example.ts)
 
 ```typescript
 // my-plugin.ts
@@ -335,20 +402,15 @@ export default {
 }
 ```
 
-### 9.2 使用插件
+### 10.2 工作区示例 (src/example-workspace.ts)
 
-```json
-// opencode.json
-{
-  "plugin": ["./my-plugin.ts"]
-}
-```
+工作区级别的插件示例。
 
 ---
 
-## 十、类型定义
+## 十一、类型定义
 
-### 10.1 核心类型
+### 11.1 核心类型
 
 ```typescript
 // 插件规范
@@ -379,26 +441,44 @@ interface AgentDef {
 
 ---
 
-## 十一、架构总结
+## 十二、脚本文件
+
+### 12.1 publish.ts
+
+**职责**: 发布插件包到 NPM
+
+```bash
+bun run script/publish.ts
+```
+
+---
+
+## 十三、架构总结
 
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                    Plugin 架构                            │
 ├─────────────────────────────────────────────────────────┤
-│                   插件文件                                 │
-│  tool.ts  │  tui.ts  │  index.ts                         │
+│                   源文件 (6 个)                            │
+│  index.ts │ tool.ts │ tui.ts │ shell.ts                 │
+│  example.ts │ example-workspace.ts                       │
 ├─────────────────────────────────────────────────────────┤
-│                   Plugin SDK                              │
-│  Tool.define()  │  registerHook()  │  createComponent()  │
+│                   导出入口 (3 个)                          │
+│  @opencode-ai/plugin      → index.ts                    │
+│  @opencode-ai/plugin/tool → tool.ts                     │
+│  @opencode-ai/plugin/tui  → tui.ts                      │
+├─────────────────────────────────────────────────────────┤
+│                   插件 SDK                                 │
+│  Tool.define() │ createComponent() │ registerHook()     │
 ├─────────────────────────────────────────────────────────┤
 │                   插件系统 (opencode 核心)                  │
-│  Plugin.load()  │  Plugin.trigger()  │  Plugin.list()    │
+│  Plugin.load() │ Plugin.trigger() │ Plugin.list()       │
 ├─────────────────────────────────────────────────────────┤
 │                   插件钩子                                 │
-│  tool.before_execute  │  session.created  │  ...         │
+│  tool.before_execute │ session.created │ ...            │
 ├─────────────────────────────────────────────────────────┤
 │                   执行环境                                 │
-│  工具执行  │  代理执行  │  命令执行                         │
+│  工具执行 │ 代理执行 │ 命令执行                            │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -409,18 +489,20 @@ interface AgentDef {
 3. **热插拔**: 动态加载/卸载
 4. **钩子系统**: 扩展生命周期
 5. **多类型支持**: 工具/代理/命令/TUI
+6. **示例代码**: 包含完整示例
 
 ---
 
-## 十二、开发命令
+## 十四、开发命令
 
 | 命令 | 说明 |
 |------|------|
+| `bun run script/publish.ts` | 发布到 NPM |
 | `bun typecheck` | 类型检查 |
 
 ---
 
-## 十三、依赖关系
+## 十五、依赖关系
 
 ```
 plugin

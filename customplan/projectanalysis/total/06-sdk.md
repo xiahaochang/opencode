@@ -16,33 +16,94 @@
 
 ---
 
-## 二、目录结构
+## 二、完整目录结构
 
 ```
 packages/sdk/
-├── js/                          # JavaScript SDK
-│   ├── src/
-│   │   ├── index.ts             # 入口
-│   │   ├── client.ts            # 客户端
-│   │   ├── server.ts            # 服务器端
-│   │   └── v2/                  # v2 API
-│   │       ├── gen/client/      # 生成的客户端代码
-│   │       │   ├── index.ts
-│   │       │   ├── sdk/
-│   │       │   └── types/
-│   │       ├── client.ts
-│   │       └── server.ts
-│   │
-│   ├── example/                 # 示例代码
-│   │   └── ...
-│   │
-│   ├── script/                  # 构建脚本
-│   │   └── build.ts             # 生成脚本
-│   │
-│   └── package.json
+├── .gitignore
+├── openapi.json                                          # OpenAPI 规范
 │
-└── openapi.json                 # OpenAPI 规范
+└── js/
+    ├── package.json
+    ├── sst-env.d.ts
+    ├── tsconfig.json
+    ├── tsconfig.tsbuildinfo
+    │
+    ├── example/
+    │   └── example.ts                                    # 示例代码
+    │
+    ├── script/
+    │   ├── build.ts                                      # 生成脚本
+    │   └── publish.ts                                    # 发布脚本
+    │
+    └── src/
+        ├── index.ts                                      # 入口
+        ├── client.ts                                     # 客户端
+        ├── process.ts                                    # 进程处理
+        ├── server.ts                                     # 服务器端
+        │
+        ├── gen/                                          # v1 生成代码
+        │   ├── client.gen.ts
+        │   ├── sdk.gen.ts
+        │   ├── types.gen.ts
+        │   │
+        │   ├── client/
+        │   │   ├── client.gen.ts
+        │   │   ├── index.ts
+        │   │   ├── types.gen.ts
+        │   │   └── utils.gen.ts
+        │   │
+        │   └── core/
+        │       ├── auth.gen.ts
+        │       ├── bodySerializer.gen.ts
+        │       ├── params.gen.ts
+        │       ├── pathSerializer.gen.ts
+        │       ├── queryKeySerializer.gen.ts
+        │       ├── serverSentEvents.gen.ts
+        │       ├── types.gen.ts
+        │       └── utils.gen.ts
+        │
+        └── v2/                                           # v2 API
+            ├── client.ts
+            ├── data.ts
+            ├── index.ts
+            ├── server.ts
+            │
+            └── gen/                                      # v2 生成代码
+                ├── client.gen.ts
+                ├── sdk.gen.ts
+                ├── types.gen.ts
+                │
+                ├── client/
+                │   ├── client.gen.ts
+                │   ├── index.ts
+                │   ├── types.gen.ts
+                │   └── utils.gen.ts
+                │
+                └── core/
+                    ├── auth.gen.ts
+                    ├── bodySerializer.gen.ts
+                    ├── params.gen.ts
+                    ├── pathSerializer.gen.ts
+                    ├── queryKeySerializer.gen.ts
+                    ├── serverSentEvents.gen.ts
+                    ├── types.gen.ts
+                    └── utils.gen.ts
 ```
+
+### 统计信息
+
+| 类别 | 数量 |
+|------|------|
+| 根文件 | 2 个 (.gitignore, openapi.json) |
+| js/ 配置 | 4 个 (package.json, sst-env.d.ts, tsconfig.json, tsconfig.tsbuildinfo) |
+| js/example/ | 1 个示例文件 |
+| js/script/ | 2 个脚本 |
+| js/src/ | 5 个源文件 (index.ts, client.ts, process.ts, server.ts) |
+| js/src/gen/ | 12 个生成文件 (client/, core/) |
+| js/src/v2/ | 5 个源文件 (client.ts, data.ts, index.ts, server.ts) |
+| js/src/v2/gen/ | 12 个生成文件 |
+| **总计** | **38 个文件** |
 
 ---
 
@@ -72,7 +133,7 @@ packages/sdk/
    ├─ 类型定义 (TypeScript interfaces)
    └─ 方法映射 (API 方法)
 
-6. 输出到 gen/client/ 目录
+6. 输出到 gen/client/ 和 gen/core/ 目录
    └─ 生成的代码
 ```
 
@@ -83,11 +144,55 @@ packages/sdk/
 bun run script/build.ts
 ```
 
+### 3.3 发布命令
+
+```bash
+# 发布到 NPM
+bun run script/publish.ts
+```
+
 ---
 
-## 四、SDK 使用
+## 四、核心模块
 
-### 4.1 基本使用
+### 4.1 源文件 (5 个)
+
+| 文件 | 作用 |
+|------|------|
+| `index.ts` | SDK 入口，导出所有公共 API |
+| `client.ts` | HTTP 客户端实现 |
+| `process.ts` | 进程处理 |
+| `server.ts` | 服务器端工具 |
+
+### 4.2 生成代码结构
+
+#### gen/client/ (4 个文件)
+
+| 文件 | 作用 |
+|------|------|
+| `client.gen.ts` | 生成的客户端类 |
+| `index.ts` | 客户端入口 |
+| `types.gen.ts` | 生成的类型定义 |
+| `utils.gen.ts` | 生成的工具函数 |
+
+#### gen/core/ (8 个文件)
+
+| 文件 | 作用 |
+|------|------|
+| `auth.gen.ts` | 认证处理 |
+| `bodySerializer.gen.ts` | 请求体序列化 |
+| `params.gen.ts` | 参数处理 |
+| `pathSerializer.gen.ts` | 路径序列化 |
+| `queryKeySerializer.gen.ts` | 查询键序列化 |
+| `serverSentEvents.gen.ts` | SSE 流处理 |
+| `types.gen.ts` | 核心类型 |
+| `utils.gen.ts` | 核心工具 |
+
+---
+
+## 五、SDK 使用
+
+### 5.1 基本使用
 
 ```typescript
 import { SDK } from "@opencode-ai/sdk"
@@ -103,7 +208,7 @@ const sessions = await sdk.sessions.list()
 const session = await sdk.sessions.get({ id: "session-id" })
 ```
 
-### 4.2 事件订阅
+### 5.2 事件订阅
 
 ```typescript
 // 订阅事件
@@ -116,7 +221,7 @@ sdk.events.subscribe("message.updated", (event) => {
 })
 ```
 
-### 4.3 流式请求
+### 5.3 流式请求
 
 ```typescript
 // 流式聊天
@@ -132,9 +237,9 @@ for await (const chunk of stream) {
 
 ---
 
-## 五、核心 API
+## 六、完整 API 列表
 
-### 5.1 API 分类
+### 6.1 API 分类
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -175,7 +280,7 @@ SDK
       └─ subscribe() → 订阅事件
 ```
 
-### 5.2 类型定义
+### 6.2 类型定义
 
 ```typescript
 // 会话类型
@@ -215,9 +320,9 @@ interface ToolCall {
 
 ---
 
-## 六、v2 API
+## 七、v2 API
 
-### 6.1 v2 架构
+### 7.1 v2 架构
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -227,16 +332,15 @@ interface ToolCall {
 v2/
   │
   ├─ client.ts         → v2 客户端
+  ├─ data.ts           → v2 数据处理
   ├─ server.ts         → v2 服务器端
-  └─ gen/client/       → 生成的代码
-      ├─ index.ts      → 入口
-      ├─ sdk/          → SDK 类
-      │   └─ ...
-      └─ types/        → 类型定义
-          └─ ...
+  ├─ index.ts          → v2 入口
+  └─ gen/              → v2 生成代码
+      ├─ client/       → v2 客户端生成 (4 个文件)
+      └─ core/         → v2 核心生成 (8 个文件)
 ```
 
-### 6.2 v2 新特性
+### 7.2 v2 新特性
 
 - 更好的类型推导
 - 改进的错误处理
@@ -245,12 +349,11 @@ v2/
 
 ---
 
-## 七、示例代码
+## 八、示例代码
 
-### 7.1 基本示例
+### 8.1 基本示例 (example/example.ts)
 
 ```typescript
-// example/basic.ts
 import { SDK } from "../src"
 
 async function main() {
@@ -279,10 +382,9 @@ async function main() {
 main()
 ```
 
-### 7.2 流式示例
+### 8.2 流式示例
 
 ```typescript
-// example/stream.ts
 import { SDK } from "../src"
 
 async function main() {
@@ -315,9 +417,15 @@ main()
 
 ---
 
-## 八、OpenAPI 规范
+## 九、OpenAPI 规范
 
-### 8.1 规范结构
+### 9.1 规范文件
+
+| 文件 | 说明 |
+|------|------|
+| `openapi.json` | OpenAPI 3.0 规范，定义所有 API 端点 |
+
+### 9.2 规范结构
 
 ```json
 {
@@ -327,48 +435,24 @@ main()
     "version": "1.4.3"
   },
   "paths": {
-    "/sessions": {
-      "get": { ... },
-      "post": { ... }
-    },
-    "/sessions/{id}": {
-      "get": { ... },
-      "delete": { ... }
-    },
-    "/chat": {
-      "post": { ... }
-    },
-    "/events": {
-      "get": { ... }
-    }
+    "/sessions": { "get": {...}, "post": {...} },
+    "/sessions/{id}": { "get": {...}, "delete": {...} },
+    "/chat": { "post": {...} },
+    "/events": { "get": {...} }
   },
   "components": {
     "schemas": {
-      "Session": { ... },
-      "Message": { ... },
-      "ToolCall": { ... }
+      "Session": {...},
+      "Message": {...},
+      "ToolCall": {...}
     }
   }
 }
 ```
 
-### 8.2 规范生成
-
-规范由 opencode 核心包在运行时生成：
-
-```typescript
-// src/server/server.ts
-import { generateOpenAPI } from "./openapi"
-
-const openapi = generateOpenAPI({
-  title: "OpenCode API",
-  version: "1.4.3"
-})
-```
-
 ---
 
-## 九、架构总结
+## 十、架构总结
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -378,13 +462,21 @@ const openapi = generateOpenAPI({
 │              import { SDK } from "@opencode-ai/sdk"       │
 ├─────────────────────────────────────────────────────────┤
 │                   SDK 客户端                              │
-│  sessions  │  messages  │  chat  │  events  │  ...       │
+│  sessions │ messages │ chat │ providers │ models │ tools │
+│  mcp │ events                                              │
+├─────────────────────────────────────────────────────────┤
+│                   生成代码层                               │
+│  gen/ (v1) → 12 个生成文件                                │
+│  v2/gen/ (v2) → 12 个生成文件                             │
+├─────────────────────────────────────────────────────────┤
+│                   核心模块                                 │
+│  client.ts │ process.ts │ server.ts │ index.ts           │
 ├─────────────────────────────────────────────────────────┤
 │                   HTTP 层                                 │
-│              fetch() → REST API                           │
+│              fetch() → REST API + SSE                     │
 ├─────────────────────────────────────────────────────────┤
 │                   OpenCode Server                         │
-│              Hono → 路由处理                              │
+│              Hono → 113 个路由端点                         │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -392,22 +484,25 @@ const openapi = generateOpenAPI({
 
 1. **自动生成**: 从 OpenAPI 规范自动生成，保持同步
 2. **类型安全**: 完整的 TypeScript 类型定义
-3. **流式支持**: 支持 SSE 流式请求
-4. **事件订阅**: 实时事件订阅
-5. **易于使用**: 简洁的 API 设计
+3. **双版本支持**: v1 和 v2 两套 API
+4. **流式支持**: 支持 SSE 流式请求
+5. **事件订阅**: 实时事件订阅
+6. **易于使用**: 简洁的 API 设计
+7. **示例代码**: 包含完整使用示例
 
 ---
 
-## 十、开发命令
+## 十一、开发命令
 
 | 命令 | 说明 |
 |------|------|
 | `bun run script/build.ts` | 生成 SDK 代码 |
+| `bun run script/publish.ts` | 发布到 NPM |
 | `bun typecheck` | 类型检查 |
 
 ---
 
-## 十一、依赖关系
+## 十二、依赖关系
 
 ```
 sdk

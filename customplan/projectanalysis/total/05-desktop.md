@@ -19,31 +19,161 @@
 
 ---
 
-## 二、目录结构
+## 二、完整目录结构
 
 ```
 packages/desktop/
-├── src/                         # 前端源码 (继承自 app)
-│   └── ...
+├── .gitignore
+├── AGENTS.md
+├── index.html
+├── package.json
+├── README.md
+├── sst-env.d.ts
+├── tsconfig.json
+├── vite.config.ts
 │
-├── src-tauri/                   # Tauri/Rust 后端
-│   ├── Cargo.toml               # Rust 依赖
-│   ├── Cargo.lock               # 依赖锁定文件
-│   ├── build.rs                 # 构建脚本
-│   ├── tauri.conf.json          # Tauri 配置
-│   ├── icons/                   # 应用图标
-│   │   └── ...
-│   └── src/                     # Rust 源码
-│       ├── main.rs              # 主入口
-│       ├── lib.rs               # 库文件
-│       └── ...
+├── scripts/                                          # 5 个构建脚本
+│   ├── copy-bundles.ts
+│   ├── finalize-latest-json.ts
+│   ├── predev.ts
+│   ├── prepare.ts
+│   └── utils.ts
 │
-├── scripts/                     # 构建脚本
-├── index.html                   # HTML 入口
-├── vite.config.ts               # Vite 配置
-├── package.json                 # 包配置
-└── README.md                    # 文档
+├── src/                                              # 前端源码
+│   ├── bindings.ts
+│   ├── cli.ts
+│   ├── entry.tsx
+│   ├── index.tsx
+│   ├── loading.tsx
+│   ├── menu.ts
+│   ├── styles.css
+│   ├── updater.ts
+│   ├── webview-zoom.ts
+│   └── i18n/                                         # 17 种语言
+│       ├── ar.ts
+│       ├── br.ts
+│       ├── bs.ts
+│       ├── da.ts
+│       ├── de.ts
+│       ├── en.ts
+│       ├── es.ts
+│       ├── fr.ts
+│       ├── index.ts
+│       ├── ja.ts
+│       ├── ko.ts
+│       ├── no.ts
+│       ├── pl.ts
+│       ├── ru.ts
+│       ├── zh.ts
+│       └── zht.ts
+│
+└── src-tauri/                                        # Tauri/Rust 后端
+    ├── .gitignore
+    ├── build.rs
+    ├── Cargo.lock
+    ├── Cargo.toml
+    ├── entitlements.plist
+    ├── tauri.beta.conf.json
+    ├── tauri.conf.json
+    ├── tauri.prod.conf.json
+    │
+    ├── assets/
+    │   ├── nsis-header.bmp
+    │   └── nsis-sidebar.bmp
+    │
+    ├── capabilities/
+    │   └── default.json
+    │
+    ├── icons/
+    │   ├── README.md
+    │   ├── beta/                                     # Beta 版图标
+    │   │   ├── 128x128.png
+    │   │   ├── 128x128@2x.png
+    │   │   ├── 32x32.png
+    │   │   ├── 64x64.png
+    │   │   ├── icon.icns
+    │   │   ├── icon.ico
+    │   │   ├── icon.png
+    │   │   ├── Square107x107Logo.png
+    │   │   ├── Square142x142Logo.png
+    │   │   ├── Square150x150Logo.png
+    │   │   ├── Square284x284Logo.png
+    │   │   ├── Square30x30Logo.png
+    │   │   ├── Square310x310Logo.png
+    │   │   ├── Square44x44Logo.png
+    │   │   ├── Square71x71Logo.png
+    │   │   ├── Square89x89Logo.png
+    │   │   ├── StoreLogo.png
+    │   │   ├── android/
+    │   │   │   ├── mipmap-anydpi-v26/ic_launcher.xml
+    │   │   │   ├── mipmap-hdpi/ (ic_launcher.png, ic_launcher_foreground.png, ic_launcher_round.png)
+    │   │   │   ├── mipmap-mdpi/ (ic_launcher.png, ic_launcher_foreground.png, ic_launcher_round.png)
+    │   │   │   ├── mipmap-xhdpi/ (ic_launcher.png, ic_launcher_foreground.png, ic_launcher_round.png)
+    │   │   │   ├── mipmap-xxhdpi/ (ic_launcher.png, ic_launcher_foreground.png, ic_launcher_round.png)
+    │   │   │   ├── mipmap-xxxhdpi/ (ic_launcher.png, ic_launcher_foreground.png, ic_launcher_round.png)
+    │   │   │   └── values/ic_launcher_background.xml
+    │   │   └── ios/
+    │   │       ├── AppIcon-20x20@1x.png
+    │   │       ├── AppIcon-20x20@2x.png
+    │   │       ├── AppIcon-20x20@2x-1.png
+    │   │       ├── AppIcon-20x20@3x.png
+    │   │       ├── AppIcon-29x29@1x.png
+    │   │       ├── AppIcon-29x29@2x.png
+    │   │       ├── AppIcon-29x29@2x-1.png
+    │   │       ├── AppIcon-29x29@3x.png
+    │   │       ├── AppIcon-40x40@1x.png
+    │   │       ├── AppIcon-40x40@2x.png
+    │   │       ├── AppIcon-40x40@2x-1.png
+    │   │       ├── AppIcon-40x40@3x.png
+    │   │       ├── AppIcon-512@2x.png
+    │   │       ├── AppIcon-60x60@2x.png
+    │   │       ├── AppIcon-60x60@3x.png
+    │   │       ├── AppIcon-76x76@1x.png
+    │   │       ├── AppIcon-76x76@2x.png
+    │   │       └── AppIcon-83.5x83.5@2x.png
+    │   │
+    │   ├── dev/                                      # Dev 版图标 (结构与 beta 相同)
+    │   │   └── [同 beta 目录结构]
+    │   │
+    │   └── prod/                                     # Prod 版图标 (结构与 beta 相同)
+    │       └── [同 beta 目录结构]
+    │
+    ├── release/
+    │   └── appstream.metainfo.xml
+    │
+    └── src/                                          # Rust 源码 (13 个文件)
+        ├── cli.rs
+        ├── constants.rs
+        ├── lib.rs
+        ├── linux_display.rs
+        ├── linux_windowing.rs
+        ├── logging.rs
+        ├── main.rs
+        ├── markdown.rs
+        ├── server.rs
+        ├── window_customizer.rs
+        ├── windows.rs
+        └── os/
+            ├── mod.rs
+            └── windows.rs
 ```
+
+### 统计信息
+
+| 类别 | 数量 |
+|------|------|
+| 根文件 | 8 个 (.gitignore, AGENTS.md, index.html, package.json, README.md, sst-env.d.ts, tsconfig.json, vite.config.ts) |
+| scripts/ | 5 个构建脚本 |
+| src/ | 10 个前端文件 + 17 种语言 i18n |
+| src-tauri/ | 7 个配置文件 |
+| src-tauri/assets/ | 2 个 NSIS 位图 |
+| src-tauri/capabilities/ | 1 个权限配置 |
+| src-tauri/icons/beta/ | 19 个图标 + Android 5 目录 + iOS 17 图标 |
+| src-tauri/icons/dev/ | 同 beta 结构 |
+| src-tauri/icons/prod/ | 同 beta 结构 |
+| src-tauri/release/ | 1 个 metainfo |
+| src-tauri/src/ | 13 个 Rust 文件 |
+| **总计** | **约 100+ 个文件** |
 
 ---
 
@@ -60,11 +190,18 @@ packages/desktop/
 │                   前端层 (Webview)                     │
 │                                                     │
 │  ┌─────────────────────────────────────────────┐   │
-│  │            SolidJS 应用 (app 包)              │   │
+│  │         SolidJS 应用 (继承自 app 包)           │   │
 │  │                                             │   │
-│  │  - 路由系统                                  │   │
-│  │  - 组件渲染                                  │   │
-│  │  - 状态管理                                  │   │
+│  │  src/entry.tsx    → 应用入口                  │   │
+│  │  src/index.tsx    → 主组件                    │   │
+│  │  src/loading.tsx  → 加载界面                  │   │
+│  │  src/menu.ts      → 菜单                      │   │
+│  │  src/bindings.ts  → 类型绑定                  │   │
+│  │  src/cli.ts       → CLI 桥接                  │   │
+│  │  src/updater.ts   → 更新器                    │   │
+│  │  src/webview-zoom.ts → Webview 缩放           │   │
+│  │  src/styles.css   → 样式                      │   │
+│  │  src/i18n/        → 17 种语言                 │   │
 │  └─────────────────────────────────────────────┘   │
 │                       │                             │
 │                       │ JS API 调用                  │
@@ -87,19 +224,19 @@ packages/desktop/
 │  ┌─────────────────────────────────────────────┐   │
 │  │        Tauri Core (Rust 运行时)               │   │
 │  │                                             │   │
-│  │  - Webview 管理                              │   │
-│  │  - 事件循环                                  │   │
-│  │  - 系统调用                                  │   │
-│  └─────────────────────────────────────────────┘   │
-│                       │                             │
-│                       │ Rust 函数调用                │
-│                       ▼                             │
-│  ┌─────────────────────────────────────────────┐   │
-│  │          自定义 Rust 命令                     │   │
-│  │                                             │   │
-│  │  - 系统级操作                                │   │
-│  │  - 性能敏感操作                              │   │
-│  │  - 原生集成                                  │   │
+│  │  src/main.rs            → Rust 主入口         │   │
+│  │  src/lib.rs             → 库文件              │   │
+│  │  src/server.rs          → 服务器管理           │   │
+│  │  src/cli.rs             → CLI 处理             │   │
+│  │  src/windows.rs         → 窗口管理             │   │
+│  │  src/window_customizer.rs → 窗口定制           │   │
+│  │  src/markdown.rs        → Markdown 处理        │   │
+│  │  src/logging.rs         → 日志系统             │   │
+│  │  src/constants.rs       → 常量定义             │   │
+│  │  src/linux_display.rs   → Linux 显示          │   │
+│  │  src/linux_windowing.rs → Linux 窗口          │   │
+│  │  src/os/mod.rs          → OS 抽象              │   │
+│  │  src/os/windows.rs      → Windows 特定         │   │
 │  └─────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────┘
 ```
@@ -111,12 +248,12 @@ packages/desktop/
 │                  IPC 通信流程                             │
 └─────────────────────────────────────────────────────────┘
 
-前端 (JS)                          后端 (Rust)
+前端 (JS/TS)                      后端 (Rust)
     │                                  │
     │  invoke('command_name', {args})  │
     ├─────────────────────────────────>│
     │                                  │
-    │                                  │ 处理命令
+    │                                  │ main.rs 处理命令
     │                                  │
     │      Promise<T> (返回值)         │
     │<─────────────────────────────────┤
@@ -135,9 +272,17 @@ packages/desktop/
 
 ---
 
-## 四、Tauri 配置 (src-tauri/tauri.conf.json)
+## 四、Tauri 配置
 
-### 4.1 主要配置项
+### 4.1 三个配置文件
+
+| 文件 | 用途 |
+|------|------|
+| `tauri.conf.json` | 基础配置 |
+| `tauri.beta.conf.json` | Beta 版配置 (测试通道) |
+| `tauri.prod.conf.json` | 生产版配置 |
+
+### 4.2 主要配置项
 
 ```json
 {
@@ -175,29 +320,37 @@ packages/desktop/
     ]
   },
   
-  "plugins": {
-    // 插件配置
-  }
+  "plugins": {}
 }
 ```
 
-### 4.2 配置说明
+### 4.3 权限配置 (capabilities/default.json)
 
-| 配置项 | 说明 |
-|--------|------|
-| `productName` | 应用名称 |
-| `identifier` | 应用唯一标识符 |
-| `build.frontendDist` | 前端构建产物路径 |
-| `build.devUrl` | 开发模式前端 URL |
-| `app.windows` | 窗口配置 |
-| `app.security.csp` | 内容安全策略 |
-| `bundle.targets` | 打包目标格式 |
+定义 Tauri 应用可使用的系统权限。
 
 ---
 
 ## 五、Rust 后端 (src-tauri/src/)
 
-### 5.1 主入口 (main.rs)
+### 5.1 Rust 文件完整列表 (13 个)
+
+| 文件 | 作用 |
+|------|------|
+| `main.rs` | Rust 主入口，应用启动 |
+| `lib.rs` | 库文件，模块导出 |
+| `server.rs` | 内部服务器管理 |
+| `cli.rs` | CLI 命令处理 |
+| `windows.rs` | 窗口管理 |
+| `window_customizer.rs` | 窗口定制化 |
+| `markdown.rs` | Markdown 渲染处理 |
+| `logging.rs` | 日志系统 |
+| `constants.rs` | 常量定义 |
+| `linux_display.rs` | Linux 显示适配 |
+| `linux_windowing.rs` | Linux 窗口适配 |
+| `os/mod.rs` | OS 抽象模块 |
+| `os/windows.rs` | Windows 特定实现 |
+
+### 5.2 主入口 (main.rs)
 
 ```rust
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
@@ -207,47 +360,28 @@ fn main() {
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_notification::init())
-        // ... 更多插件
         .setup(|app| {
             // 初始化逻辑
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
             // 注册自定义命令
-            custom_command_1,
-            custom_command_2,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
 ```
 
-### 5.2 自定义命令示例
-
-```rust
-#[tauri::command]
-fn custom_command_1(arg1: String, arg2: i32) -> Result<String, String> {
-    // 处理逻辑
-    Ok(format!("Received: {}, {}", arg1, arg2))
-}
-
-#[tauri::command]
-async fn custom_command_2(app: tauri::AppHandle) -> Result<(), String> {
-    // 异步操作
-    Ok(())
-}
-```
-
 ### 5.3 关键函数
 
-| 函数 | 作用 |
-|------|------|
-| `main()` | 应用入口 |
-| `tauri::Builder::default()` | 创建构建器 |
-| `.plugin()` | 注册插件 |
-| `.setup()` | 初始化回调 |
-| `.invoke_handler()` | 注册自定义命令 |
-| `.run()` | 运行应用 |
+| 函数 | 文件 | 作用 |
+|------|------|------|
+| `main()` | main.rs | 应用入口 |
+| `tauri::Builder::default()` | main.rs | 创建构建器 |
+| `.plugin()` | main.rs | 注册插件 |
+| `.setup()` | main.rs | 初始化回调 |
+| `.invoke_handler()` | main.rs | 注册自定义命令 |
+| `.run()` | main.rs | 运行应用 |
 
 ---
 
@@ -270,12 +404,9 @@ async fn custom_command_2(app: tauri::AppHandle) -> Result<(), String> {
   ├─ os                  → 操作系统信息
   ├─ process             → 进程管理
   ├─ updater             → 应用更新
-  └─ ... (更多插件)
 ```
 
-### 6.2 插件使用示例
-
-#### 前端调用 (JS)
+### 6.2 前端调用示例
 
 ```typescript
 import { invoke } from "@tauri-apps/api/core"
@@ -292,68 +423,54 @@ const file = await open({
 await writeText("Hello World")
 
 // 调用自定义命令
-const result = await invoke("custom_command_1", { arg1: "hello", arg2: 42 })
+const result = await invoke("custom_command", { arg1: "hello", arg2: 42 })
 ```
 
 ---
 
 ## 七、构建流程
 
-### 7.1 开发模式
+### 7.1 Scripts 构建脚本 (5 个)
+
+| 文件 | 作用 |
+|------|------|
+| `copy-bundles.ts` | 复制打包产物 |
+| `finalize-latest.json.ts` | 生成 latest.json |
+| `predev.ts` | 开发前预处理 |
+| `prepare.ts` | 准备构建 |
+| `utils.ts` | 构建工具函数 |
+
+### 7.2 开发模式
 
 ```bash
-# 在 packages/desktop 目录下
 bun run --cwd packages/desktop tauri dev
 ```
 
 #### 开发流程
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                  开发模式流程                              │
-└─────────────────────────────────────────────────────────┘
-
-1. 启动 Vite 开发服务器
-   └─ http://localhost:3000
-
-2. Tauri 加载开发 URL
-   └─ Webview 指向 localhost:3000
-
-3. 热模块替换 (HMR)
-   └─ 代码变更自动刷新
-
-4. Rust 代码变更
-   └─ 自动重新编译
+1. 启动 Vite 开发服务器 → http://localhost:3000
+2. Tauri 加载开发 URL → Webview 指向 localhost:3000
+3. 热模块替换 (HMR) → 代码变更自动刷新
+4. Rust 代码变更 → 自动重新编译
 ```
 
-### 7.2 生产构建
+### 7.3 生产构建
 
 ```bash
-# 在 packages/desktop 目录下
 bun run --cwd packages/desktop tauri build
 ```
 
 #### 构建流程
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                  构建流程                                 │
-└─────────────────────────────────────────────────────────┘
-
-1. 构建前端应用
-   └─ Vite 生产构建 → dist/ 目录
-
-2. 编译 Rust 后端
-   └─ Cargo 编译 → 可执行文件
-
-3. 打包应用
-   └─ 根据 target 打包
-      ├─ Windows: .msi / .exe
-      ├─ macOS: .dmg / .app
-      └─ Linux: .deb / .AppImage
-
-4. 签名 (可选)
-   └─ 应用签名
+1. 构建前端应用 → Vite 生产构建 → dist/ 目录
+2. 编译 Rust 后端 → Cargo 编译 → 可执行文件
+3. 打包应用 → 根据 target 打包
+   ├─ Windows: .msi / .exe
+   ├─ macOS: .dmg / .app
+   └─ Linux: .deb / .AppImage
+4. 签名 (可选) → 应用签名
 ```
 
 ---
@@ -369,19 +486,43 @@ bun run --cwd packages/desktop tauri build
 
 src-tauri/icons/
   │
-  ├─ 32x32.png         → Windows 小图标
-  ├─ 128x128.png       → macOS 中等图标
-  ├─ 128x128@2x.png    → macOS 高分辨率图标
-  ├─ icon.icns         → macOS 应用图标
-  ├─ icon.ico          → Windows 应用图标
-  └─ Square*.png       → Windows 应用商店图标
-```
-
-### 8.2 图标生成
-
-```bash
-# 使用 Tauri CLI 生成图标
-bunx tauri icon path/to/source.png
+  ├─ beta/     → Beta 版图标
+  ├─ dev/      → 开发版图标
+  └─ prod/     → 生产版图标
+      │
+      ├─ 桌面图标
+      │   ├─ 32x32.png, 64x64.png
+      │   ├─ 128x128.png, 128x128@2x.png
+      │   ├─ icon.icns (macOS)
+      │   └─ icon.ico (Windows)
+      │
+      ├─ Windows 商店图标
+      │   ├─ Square30x30Logo.png
+      │   ├─ Square44x44Logo.png
+      │   ├─ Square71x71Logo.png
+      │   ├─ Square89x89Logo.png
+      │   ├─ Square107x107Logo.png
+      │   ├─ Square142x142Logo.png
+      │   ├─ Square150x150Logo.png
+      │   ├─ Square284x284Logo.png
+      │   ├─ Square310x310Logo.png
+      │   └─ StoreLogo.png
+      │
+      ├─ Android 图标
+      │   ├─ mipmap-mdpi/ (48x48)
+      │   ├─ mipmap-hdpi/ (72x72)
+      │   ├─ mipmap-xhdpi/ (96x96)
+      │   ├─ mipmap-xxhdpi/ (144x144)
+      │   └─ mipmap-xxxhdpi/ (192x192)
+      │
+      └─ iOS 图标
+          ├─ AppIcon-20x20@1x.png ~ @3x.png
+          ├─ AppIcon-29x29@1x.png ~ @3x.png
+          ├─ AppIcon-40x40@1x.png ~ @3x.png
+          ├─ AppIcon-60x60@2x.png, @3x.png
+          ├─ AppIcon-76x76@1x.png, @2x.png
+          ├─ AppIcon-83.5x83.5@2x.png
+          └─ AppIcon-512@2x.png
 ```
 
 ---
@@ -395,17 +536,10 @@ bunx tauri icon path/to/source.png
 │                    应用更新流程                            │
 └─────────────────────────────────────────────────────────┘
 
-1. 检查更新
-   └─ 定期轮询更新服务器
-
-2. 发现新版本
-   └─ 显示更新提示
-
-3. 下载更新
-   └─ 下载更新包
-
-4. 安装更新
-   └─ 重启应用并应用更新
+1. 检查更新 → 定期轮询更新服务器
+2. 发现新版本 → 显示更新提示
+3. 下载更新 → 下载更新包
+4. 安装更新 → 重启应用并应用更新
 ```
 
 ### 9.2 前端实现
@@ -416,7 +550,6 @@ import { check } from "@tauri-apps/plugin-updater"
 async function checkForUpdates() {
   const update = await check()
   if (update) {
-    // 显示更新提示
     const confirmed = await confirm(
       `新版本 ${update.version} 可用，是否更新？`
     )
@@ -426,6 +559,13 @@ async function checkForUpdates() {
   }
 }
 ```
+
+### 9.3 更新模块 (src/updater.ts)
+
+| 函数 | 作用 |
+|------|------|
+| `checkForUpdates()` | 检查更新 |
+| `downloadAndInstall()` | 下载并安装 |
 
 ---
 
@@ -441,20 +581,6 @@ img-src 'self' data: blob:
 connect-src 'self' http://localhost:* ws://localhost:*
 ```
 
-### 10.2 权限控制
-
-```json
-{
-  "app": {
-    "security": {
-      "csp": "...",
-      "freezePrototype": true,
-      "dangerousDisableAssetCSPModification": false
-    }
-  }
-}
-```
-
 ---
 
 ## 十一、平台适配
@@ -467,10 +593,10 @@ connect-src 'self' http://localhost:* ws://localhost:*
 └─────────────────────────────────────────────────────────┘
 
 - 安装包格式: .msi / .exe
+- NSIS 安装器: nsis-header.bmp, nsis-sidebar.bmp
 - 图标: .ico
 - 系统通知: Windows Toast
-- 文件关联: 支持
-- 注册表: 支持
+- 特定实现: src/os/windows.rs, src/windows.rs
 ```
 
 ### 11.2 macOS
@@ -485,6 +611,7 @@ connect-src 'self' http://localhost:* ws://localhost:*
 - 系统通知: NSUserNotification
 - 触控栏: 支持 (可选)
 - 沙盒: 支持 (可选)
+- 权限: entitlements.plist
 ```
 
 ### 11.3 Linux
@@ -498,49 +625,86 @@ connect-src 'self' http://localhost:* ws://localhost:*
 - 图标: .png
 - 系统通知: libnotify
 - 桌面集成: 支持
+- 显示适配: src/linux_display.rs
+- 窗口适配: src/linux_windowing.rs
 ```
 
 ---
 
-## 十二、架构总结
+## 十二、前端源码 (src/)
+
+### 12.1 文件完整列表 (10 个 + i18n 17 个)
+
+| 文件 | 作用 |
+|------|------|
+| `entry.tsx` | 应用入口 |
+| `index.tsx` | 主组件 |
+| `loading.tsx` | 加载界面 |
+| `menu.ts` | 菜单定义 |
+| `bindings.ts` | 类型绑定 |
+| `cli.ts` | CLI 桥接 |
+| `updater.ts` | 更新器 |
+| `webview-zoom.ts` | Webview 缩放 |
+| `styles.css` | 样式 |
+| `i18n/index.ts` | i18n 入口 |
+| `i18n/ar.ts` ~ `i18n/zht.ts` | 17 种语言翻译 |
+
+---
+
+## 十三、架构总结
 
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                    Desktop 架构                            │
 ├─────────────────────────────────────────────────────────┤
 │                   用户界面层                               │
-│              SolidJS 应用 (继承自 app 包)                   │
+│  entry.tsx │ index.tsx │ loading.tsx │ menu.ts           │
+│  bindings.ts │ cli.ts │ updater.ts │ webview-zoom.ts     │
+│  i18n/ (17 种语言)                                       │
 ├─────────────────────────────────────────────────────────┤
 │                   Tauri JS API 层                         │
-│  clipboard  │  dialog  │  notification  │  shell  │  fs   │
+│  clipboard │ dialog │ notification │ shell │ fs │ os     │
 ├─────────────────────────────────────────────────────────┤
 │                   IPC 通信层                               │
-│              invoke / emit / listen                        │
+│  invoke / emit / listen                                  │
 ├─────────────────────────────────────────────────────────┤
 │                   Tauri Core (Rust)                       │
-│  Webview 管理  │  事件循环  │  系统调用                     │
+│  main.rs │ lib.rs │ server.rs │ cli.rs │ windows.rs     │
+│  window_customizer.rs │ markdown.rs │ logging.rs         │
+│  constants.rs │ linux_display.rs │ linux_windowing.rs   │
+│  os/mod.rs │ os/windows.rs                               │
 ├─────────────────────────────────────────────────────────┤
-│                   自定义 Rust 命令                         │
-│              系统级操作  │  性能优化                        │
+│                   构建脚本                                 │
+│  copy-bundles.ts │ finalize-latest-json.ts               │
+│  predev.ts │ prepare.ts │ utils.ts                       │
+├─────────────────────────────────────────────────────────┤
+│                   配置文件                                 │
+│  tauri.conf.json │ tauri.beta.conf.json                  │
+│  tauri.prod.conf.json │ capabilities/default.json        │
+├─────────────────────────────────────────────────────────┤
+│                   应用图标                                 │
+│  beta/ (19+5+17) │ dev/ │ prod/                           │
 ├─────────────────────────────────────────────────────────┤
 │                   操作系统层                               │
-│  Windows  │  macOS  │  Linux                              │
+│  Windows │ macOS │ Linux                                 │
 └─────────────────────────────────────────────────────────┘
 ```
 
 ### 设计亮点
 
 1. **Tauri 架构**: 轻量级桌面框架，比 Electron 更小
-2. **Rust 后端**: 高性能系统级操作
+2. **Rust 后端**: 高性能系统级操作 (13 个 Rust 文件)
 3. **前端复用**: 直接继承 app 包，无需重复开发
 4. **多平台支持**: Windows/macOS/Linux 统一代码
 5. **安全设计**: CSP + 沙盒 + 权限控制
 6. **自动更新**: 内置应用更新机制
 7. **原生集成**: 系统通知、剪贴板、文件对话框
+8. **多版本支持**: beta/dev/prod 三个配置
+9. **完整图标集**: 三套图标 (beta/dev/prod) + Android + iOS
 
 ---
 
-## 十三、开发命令
+## 十四、开发命令
 
 | 命令 | 说明 |
 |------|------|
@@ -551,7 +715,7 @@ connect-src 'self' http://localhost:* ws://localhost:*
 
 ---
 
-## 十四、依赖关系
+## 十五、依赖关系
 
 ```
 desktop
@@ -564,6 +728,4 @@ desktop
   │   │
   │   ├─ @opencode-ai/ui    → UI 组件库
   │   └─ @opencode-ai/sdk   → JavaScript SDK
-  │
-  └─ 其他依赖...
 ```

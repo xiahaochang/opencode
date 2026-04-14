@@ -20,101 +20,283 @@
 
 ---
 
-## 二、目录结构
+## 二、完整目录结构
 
 ```
-packages/app/
-├── src/
-│   ├── index.ts                 # 公共导出
-│   ├── entry.tsx                # 入口文件（render 挂载点）
-│   ├── app.tsx                  # 主应用组件（路由 + Provider 树）
-│   ├── index.css                # 全局样式
-│   │
-│   ├── pages/                   # 页面路由组件
-│   │   ├── home.tsx             # 首页（项目选择）
-│   │   ├── layout.tsx           # 主布局（侧边栏 + 项目/工作区管理）
-│   │   ├── session.tsx          # 会话页面（AI 对话交互）
-│   │   ├── directory-layout.tsx # 目录级别布局包装器
-│   │   ├── error.tsx            # 错误页面
-│   │   ├── layout/              #   布局子组件
-│   │   │   ├── sidebar-shell.tsx      # 侧边栏外壳
-│   │   │   ├── sidebar-project.tsx    # 项目级别侧边栏项
-│   │   │   ├── sidebar-workspace.tsx  # 工作区级别侧边栏项
-│   │   │   ├── sidebar-items.tsx      # 侧边栏会话列表项
-│   │   │   └── inline-editor.tsx      # 内联编辑器控制器
-│   │   └── session/             #   会话子组件
-│   │       ├── composer/              # 作曲家区域
-│   │       │   ├── session-composer-region.tsx
-│   │       │   ├── session-question-dock.tsx
-│   │       │   ├── session-permission-dock.tsx
-│   │       │   ├── session-followup-dock.tsx
-│   │       │   ├── session-revert-dock.tsx
-│   │       │   └── session-todo-dock.tsx
-│   │       ├── message-timeline.tsx   # 消息时间线
-│   │       ├── review-tab.tsx         # 代码审查标签页
-│   │       ├── terminal-panel.tsx     # 终端面板
-│   │       ├── session-side-panel.tsx # 会话侧面板
-│   │       ├── file-tabs.tsx          # 文件标签页
-│   │       └── ...
-│   │
-│   ├── components/              # 共享组件
-│   │   ├── prompt-input.tsx     # 提示输入框（核心交互组件）
-│   │   ├── file-tree.tsx        # 文件树
-│   │   ├── terminal.tsx         # 终端
-│   │   ├── titlebar.tsx         # 标题栏
-│   │   ├── dialog-*.tsx         # 各类对话框组件
-│   │   ├── settings-*.tsx       # 设置面板组件
-│   │   └── prompt-input/        #   prompt-input 子模块
-│   │
-│   ├── context/                 # 全局状态/Provider（19 个）
-│   │   ├── server.tsx           # 服务器连接管理
-│   │   ├── settings.tsx         # 用户设置
-│   │   ├── layout.tsx           # 布局状态（侧边栏、标签等）
-│   │   ├── sync.tsx             # 数据同步
-│   │   ├── global-sync.tsx      # 全局同步（多项目）
-│   │   ├── sdk.tsx              # SDK 实例
-│   │   ├── global-sdk.tsx       # 全局 SDK
-│   │   ├── prompt.tsx           # Prompt 状态
-│   │   ├── file.tsx             # 文件管理
-│   │   ├── terminal.tsx         # 终端管理
-│   │   ├── command.tsx          # 命令注册/快捷键
-│   │   ├── models.tsx           # 模型管理
-│   │   ├── permission.tsx       # 权限管理
-│   │   ├── notification.tsx     # 通知
-│   │   ├── comments.tsx         # 评论/批注
-│   │   ├── highlights.tsx       # 高亮
-│   │   ├── language.tsx         # 国际化
-│   │   ├── platform.tsx         # 平台抽象层
-│   │   └── local.tsx            # 本地状态
-│   │
-│   ├── hooks/                   # 自定义 Hooks
-│   │   └── use-providers.ts     # Provider 列表获取
-│   │
-│   ├── utils/                   # 工具函数（33 个文件）
-│   │   ├── persist.ts           # 持久化存储
-│   │   ├── base64.ts            # Base64 编解码
-│   │   ├── server-health.ts     # 健康检查
-│   │   ├── worktree.ts          # Git worktree 管理
-│   │   └── ...
-│   │
-│   ├── i18n/                    # 国际化字典
-│   │   ├── en.ts                # 英文翻译
-│   │   └── zh.ts                # 中文翻译
-│   │
-│   ├── constants/               # 常量
-│   │   └── file-picker.ts       # 文件选择器配置
-│   │
-│   ├── addons/                  # 插件序列化
-│   └── testing/                 # E2E 测试探针
+packages/app/src/
+├── addons/
+│   ├── serialize.test.ts
+│   └── serialize.ts
 │
-├── e2e/                         # E2E 测试
-├── test/                        # 单元测试
-├── public/                      # 静态资源
-├── script/                      # 脚本
-├── vite.config.ts               # Vite 配置
-├── package.json                 # 包配置
-└── playwright.config.ts         # Playwright 配置
+├── components/
+│   ├── prompt-input/
+│   │   ├── attachments.test.ts
+│   │   ├── attachments.ts
+│   │   ├── build-request-parts.test.ts
+│   │   ├── build-request-parts.ts
+│   │   ├── context-items.tsx
+│   │   ├── drag-overlay.tsx
+│   │   ├── editor-dom.test.ts
+│   │   ├── editor-dom.ts
+│   │   ├── files.ts
+│   │   ├── history.test.ts
+│   │   ├── history.ts
+│   │   ├── image-attachments.tsx
+│   │   ├── paste.ts
+│   │   ├── placeholder.test.ts
+│   │   ├── placeholder.ts
+│   │   ├── slash-popover.tsx
+│   │   ├── submit.test.ts
+│   │   └── submit.ts
+│   ├── server/
+│   │   └── server-row.tsx
+│   ├── session/
+│   │   ├── index.ts
+│   │   ├── session-context-breakdown.test.ts
+│   │   ├── session-context-breakdown.ts
+│   │   ├── session-context-format.ts
+│   │   ├── session-context-metrics.test.ts
+│   │   ├── session-context-metrics.ts
+│   │   ├── session-context-tab.tsx
+│   │   ├── session-header.tsx
+│   │   ├── session-new-view.tsx
+│   │   ├── session-sortable-tab.tsx
+│   │   └── session-sortable-terminal-tab.tsx
+│   ├── debug-bar.tsx
+│   ├── dialog-connect-provider.tsx
+│   ├── dialog-custom-provider-form.ts
+│   ├── dialog-custom-provider.test.ts
+│   ├── dialog-custom-provider.tsx
+│   ├── dialog-edit-project.tsx
+│   ├── dialog-fork.tsx
+│   ├── dialog-manage-models.tsx
+│   ├── dialog-release-notes.tsx
+│   ├── dialog-select-directory.tsx
+│   ├── dialog-select-file.tsx
+│   ├── dialog-select-mcp.tsx
+│   ├── dialog-select-model-unpaid.tsx
+│   ├── dialog-select-model.tsx
+│   ├── dialog-select-provider.tsx
+│   ├── dialog-select-server.tsx
+│   ├── dialog-settings.tsx
+│   ├── file-tree.test.ts
+│   ├── file-tree.tsx
+│   ├── link.tsx
+│   ├── model-tooltip.tsx
+│   ├── prompt-input.tsx
+│   ├── session-context-usage.tsx
+│   ├── settings-general.tsx
+│   ├── settings-keybinds.tsx
+│   ├── settings-list.tsx
+│   ├── settings-models.tsx
+│   ├── settings-providers.tsx
+│   ├── status-popover-body.tsx
+│   ├── status-popover.tsx
+│   ├── terminal.tsx
+│   ├── titlebar-history.test.ts
+│   ├── titlebar-history.ts
+│   └── titlebar.tsx
+│
+├── constants/
+│   └── file-picker.ts
+│
+├── context/
+│   ├── file/
+│   │   ├── content-cache.ts
+│   │   ├── path.test.ts
+│   │   ├── path.ts
+│   │   ├── tree-store.ts
+│   │   ├── types.ts
+│   │   ├── view-cache.ts
+│   │   ├── watcher.test.ts
+│   │   └── watcher.ts
+│   ├── global-sync/
+│   │   ├── bootstrap.ts
+│   │   ├── child-store.test.ts
+│   │   ├── child-store.ts
+│   │   ├── event-reducer.test.ts
+│   │   ├── event-reducer.ts
+│   │   ├── eviction.ts
+│   │   ├── queue.ts
+│   │   ├── session-cache.test.ts
+│   │   ├── session-cache.ts
+│   │   ├── session-load.ts
+│   │   ├── session-prefetch.test.ts
+│   │   ├── session-prefetch.ts
+│   │   ├── session-trim.test.ts
+│   │   ├── session-trim.ts
+│   │   ├── types.ts
+│   │   ├── utils.test.ts
+│   │   └── utils.ts
+│   ├── command-keybind.test.ts
+│   ├── command.test.ts
+│   ├── command.tsx
+│   ├── comments.test.ts
+│   ├── comments.tsx
+│   ├── file-content-eviction-accounting.test.ts
+│   ├── file.tsx
+│   ├── global-sdk.tsx
+│   ├── global-sync.test.ts
+│   ├── global-sync.tsx
+│   ├── highlights.tsx
+│   ├── language.tsx
+│   ├── layout-scroll.test.ts
+│   ├── layout-scroll.ts
+│   ├── layout.test.ts
+│   ├── layout.tsx
+│   ├── local.tsx
+│   ├── model-variant.test.ts
+│   ├── model-variant.ts
+│   ├── models.tsx
+│   ├── notification.tsx
+│   ├── permission-auto-respond.test.ts
+│   ├── permission-auto-respond.ts
+│   ├── permission.tsx
+│   ├── platform.tsx
+│   ├── prompt.tsx
+│   ├── sdk.tsx
+│   ├── server.tsx
+│   ├── settings.tsx
+│   ├── sync-optimistic.test.ts
+│   ├── sync.tsx
+│   ├── terminal-title.ts
+│   ├── terminal.test.ts
+│   └── terminal.tsx
+│
+├── hooks/
+│   └── use-providers.ts
+│
+├── i18n/
+│   ├── ar.ts
+│   ├── br.ts
+│   ├── bs.ts
+│   ├── da.ts
+│   ├── de.ts
+│   ├── en.ts
+│   ├── es.ts
+│   ├── fr.ts
+│   ├── ja.ts
+│   ├── ko.ts
+│   ├── no.ts
+│   ├── parity.test.ts
+│   ├── pl.ts
+│   ├── ru.ts
+│   ├── th.ts
+│   ├── tr.ts
+│   ├── zh.ts
+│   └── zht.ts
+│
+├── pages/
+│   ├── layout/
+│   │   ├── deep-links.ts
+│   │   ├── helpers.test.ts
+│   │   ├── helpers.ts
+│   │   ├── inline-editor.tsx
+│   │   ├── sidebar-items.tsx
+│   │   ├── sidebar-project.tsx
+│   │   ├── sidebar-shell.tsx
+│   │   └── sidebar-workspace.tsx
+│   ├── session/
+│   │   ├── composer/
+│   │   │   ├── index.ts
+│   │   │   ├── session-composer-region.tsx
+│   │   │   ├── session-composer-state.test.ts
+│   │   │   ├── session-composer-state.ts
+│   │   │   ├── session-followup-dock.tsx
+│   │   │   ├── session-permission-dock.tsx
+│   │   │   ├── session-question-dock.tsx
+│   │   │   ├── session-request-tree.ts
+│   │   │   ├── session-revert-dock.tsx
+│   │   │   └── session-todo-dock.tsx
+│   │   ├── file-tab-scroll.test.ts
+│   │   ├── file-tab-scroll.ts
+│   │   ├── file-tabs.tsx
+│   │   ├── handoff.ts
+│   │   ├── helpers.test.ts
+│   │   ├── helpers.ts
+│   │   ├── message-gesture.test.ts
+│   │   ├── message-gesture.ts
+│   │   ├── message-id-from-hash.ts
+│   │   ├── message-timeline.tsx
+│   │   ├── review-tab.tsx
+│   │   ├── session-layout.ts
+│   │   ├── session-model-helpers.test.ts
+│   │   ├── session-model-helpers.ts
+│   │   ├── session-side-panel.tsx
+│   │   ├── terminal-label.ts
+│   │   ├── terminal-panel.test.ts
+│   │   ├── terminal-panel.tsx
+│   │   ├── use-session-commands.tsx
+│   │   ├── use-session-hash-scroll.test.ts
+│   │   └── use-session-hash-scroll.ts
+│   ├── directory-layout.tsx
+│   ├── error.tsx
+│   ├── home.tsx
+│   ├── layout.tsx
+│   └── session.tsx
+│
+├── testing/
+│   ├── model-selection.ts
+│   ├── prompt.ts
+│   ├── session-composer.ts
+│   └── terminal.ts
+│
+├── utils/
+│   ├── agent.ts
+│   ├── aim.ts
+│   ├── base64.ts
+│   ├── comment-note.ts
+│   ├── diffs.test.ts
+│   ├── diffs.ts
+│   ├── id.ts
+│   ├── notification-click.test.ts
+│   ├── notification-click.ts
+│   ├── persist.test.ts
+│   ├── persist.ts
+│   ├── prompt.test.ts
+│   ├── prompt.ts
+│   ├── runtime-adapters.test.ts
+│   ├── runtime-adapters.ts
+│   ├── same.ts
+│   ├── scoped-cache.test.ts
+│   ├── scoped-cache.ts
+│   ├── server-errors.test.ts
+│   ├── server-errors.ts
+│   ├── server-health.test.ts
+│   ├── server-health.ts
+│   ├── server.ts
+│   ├── session-title.ts
+│   ├── solid-dnd.tsx
+│   ├── sound.ts
+│   ├── terminal-writer.test.ts
+│   ├── terminal-writer.ts
+│   ├── time.ts
+│   ├── uuid.test.ts
+│   ├── uuid.ts
+│   ├── worktree.test.ts
+│   └── worktree.ts
+│
+├── app.tsx
+├── custom-elements.d.ts
+├── entry.tsx
+├── env.d.ts
+├── index.css
+├── index.ts
+└── sst-env.d.ts
 ```
+
+### 统计信息
+
+| 类别 | 数量 |
+|------|------|
+| 顶级目录 | 8 个 (addons, components, constants, context, hooks, i18n, pages, testing, utils) |
+| 根文件 | 9 个 (app.tsx, custom-elements.d.ts, entry.tsx, env.d.ts, index.css, index.ts, sst-env.d.ts 等) |
+| components/ 文件 | 43 个 (含 prompt-input/ 子目录 16 个, server/ 子目录 1 个, session/ 子目录 10 个) |
+| context/ 文件 | 46 个 (含 file/ 子目录 8 个, global-sync/ 子目录 15 个) |
+| pages/ 文件 | 31 个 (含 layout/ 子目录 7 个, session/ 子目录 24 个) |
+| i18n/ 文件 | 18 个 (17 种语言 + 1 个测试) |
+| utils/ 文件 | 34 个 |
+| **总计** | **217 个文件** |
 
 ---
 
@@ -157,13 +339,13 @@ packages/app/
 
 ### 路由说明
 
-| 路由 | 组件 | 说明 |
-|------|------|------|
-| `/` | `HomeRoute` | 首页，项目选择 |
-| `/:dir` | `DirectoryLayout` | 目录包装器，初始化 SDK 和 Sync |
-| `/:dir/` | `SessionIndexRoute` | 重定向到 session |
-| `/:dir/session/:id?` | `SessionRoute` | 会话页面，核心交互 |
-| `*` | `ErrorRoute` | 错误页面 |
+| 路由 | 组件 | 文件 | 说明 |
+|------|------|------|------|
+| `/` | `HomeRoute` | `pages/home.tsx` | 首页，项目选择 |
+| `/:dir` | `DirectoryLayout` | `pages/directory-layout.tsx` | 目录包装器，初始化 SDK 和 Sync |
+| `/:dir/` | `SessionIndexRoute` | `pages/session.tsx` | 重定向到 session |
+| `/:dir/session/:id?` | `SessionRoute` | `pages/session.tsx` | 会话页面，核心交互 |
+| `*` | `ErrorRoute` | `pages/error.tsx` | 错误页面 |
 
 ---
 
@@ -290,45 +472,18 @@ DirectoryLayout
       └─ prefetchConcurrency = 2
 ```
 
-#### 流程图
+#### 子组件目录 (src/pages/layout/)
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                  布局初始化流程                            │
-└─────────────────────────────────────────────────────────┘
-
-DirectoryLayout 挂载
-  │
-  ├─ 1. 初始化 Provider 树
-  │    └─ ServerProvider, SettingsProvider, ...
-  │
-  ├─ 2. 检查是否需要自动打开项目
-  │    └─ 如果无当前项目 → 自动打开最近项目
-  │
-  ├─ 3. 设置事件监听
-  │    ├─ 权限通知 → toast
-  │    └─ 问题通知 → toast
-  │
-  ├─ 4. 启动更新检查定时器
-  │    └─ 每 N 分钟轮询一次
-  │
-  └─ 5. 渲染布局
-       │
-       ├─ 侧边栏外壳 (SidebarShell)
-       ├─ 项目列表 (SidebarProject)
-       ├─ 工作区列表 (SidebarWorkspace)
-       └─ 会话列表 (SidebarItems)
-```
-
-#### 子组件
-
-| 组件 | 文件 | 作用 |
-|------|------|------|
-| `SidebarShell` | `layout/sidebar-shell.tsx` | 侧边栏外壳 |
-| `SidebarProject` | `layout/sidebar-project.tsx` | 项目级别侧边栏项（含拖拽） |
-| `SidebarWorkspace` | `layout/sidebar-workspace.tsx` | 工作区级别侧边栏项（含拖拽） |
-| `SidebarItems` | `layout/sidebar-items.tsx` | 侧边栏会话列表项 |
-| `InlineEditor` | `layout/inline-editor.tsx` | 内联编辑器控制器 |
+| 文件 | 作用 |
+|------|------|
+| `sidebar-shell.tsx` | 侧边栏外壳 |
+| `sidebar-project.tsx` | 项目级别侧边栏项（含拖拽） |
+| `sidebar-workspace.tsx` | 工作区级别侧边栏项（含拖拽） |
+| `sidebar-items.tsx` | 侧边栏会话列表项 |
+| `inline-editor.tsx` | 内联编辑器控制器 |
+| `deep-links.ts` | 深度链接处理 |
+| `helpers.ts` | 辅助函数 |
+| `helpers.test.ts` | 辅助函数测试 |
 
 #### 关键函数
 
@@ -389,50 +544,39 @@ SessionRoute
       └─ 点击消息中的文件在标签页中打开
 ```
 
-#### 流程图
+#### 子组件目录 (src/pages/session/)
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                  会话页面流程                             │
-└─────────────────────────────────────────────────────────┘
+| 文件 | 作用 |
+|------|------|
+| `message-timeline.tsx` | 消息时间线 |
+| `review-tab.tsx` | 代码审查标签页 |
+| `terminal-panel.tsx` | 终端面板 |
+| `session-side-panel.tsx` | 会话侧面板 |
+| `file-tabs.tsx` | 文件标签页 |
+| `session-layout.ts` | 会话布局辅助 |
+| `handoff.ts` | 交接处理 |
+| `helpers.ts` | 辅助函数 |
+| `message-gesture.ts` | 消息手势交互 |
+| `message-id-from-hash.ts` | 从哈希获取消息ID |
+| `terminal-label.ts` | 终端标签 |
+| `use-session-commands.tsx` | 会话命令钩子 |
+| `use-session-hash-scroll.ts` | 会话滚动哈希 |
+| `file-tab-scroll.ts` | 文件标签滚动 |
+| `session-model-helpers.ts` | 模型辅助函数 |
 
-SessionRoute 渲染
-  │
-  ├─ 1. 加载会话数据
-  │    └─ SDK.getMessages(sessionID)
-  │
-  ├─ 2. 渲染消息时间线
-  │    └─ MessageTimeline 组件
-  │
-  ├─ 3. 监听新消息
-  │    └─ SSE 事件流 → 更新消息列表
-  │
-  ├─ 4. 用户输入消息
-  │    └─ Composer 区域 → 发送 prompt
-  │
-  ├─ 5. AI 处理并返回
-  │    ├─ 工具调用 → 显示进度
-  │    └─ 文本回复 → 显示内容
-  │
-  └─ 6. 自动滚动到底部
-       └─ scrollToBottom()
-```
+#### Composer 子目录 (src/pages/session/composer/)
 
-#### 子组件
-
-| 组件 | 文件 | 作用 |
-|------|------|------|
-| `MessageTimeline` | `session/message-timeline.tsx` | 消息时间线 |
-| `SessionComposerRegion` | `session/composer/session-composer-region.tsx` | 主 composer 区域 |
-| `SessionQuestionDock` | `session/composer/session-question-dock.tsx` | 问题 dock |
-| `SessionPermissionDock` | `session/composer/session-permission-dock.tsx` | 权限请求 dock |
-| `SessionFollowupDock` | `session/composer/session-followup-dock.tsx` | 后续对话 dock |
-| `SessionRevertDock` | `session/composer/session-revert-dock.tsx` | 撤销 dock |
-| `SessionTodoDock` | `session/composer/session-todo-dock.tsx` | Todo 列表 dock |
-| `ReviewTab` | `session/review-tab.tsx` | 代码审查标签页 |
-| `TerminalPanel` | `session/terminal-panel.tsx` | 终端面板 |
-| `SessionSidePanel` | `session/session-side-panel.tsx` | 会话侧面板 |
-| `FileTabs` | `session/file-tabs.tsx` | 文件标签页 |
+| 文件 | 作用 |
+|------|------|
+| `session-composer-region.tsx` | 主 composer 区域 |
+| `session-composer-state.ts` | Composer 状态管理 |
+| `session-question-dock.tsx` | 问题 dock |
+| `session-permission-dock.tsx` | 权限请求 dock |
+| `session-followup-dock.tsx` | 后续对话 dock |
+| `session-revert-dock.tsx` | 撤销 dock |
+| `session-todo-dock.tsx` | Todo 列表 dock |
+| `session-request-tree.ts` | 请求树 |
+| `index.ts` | 入口 |
 
 #### 关键函数
 
@@ -465,6 +609,7 @@ App
   │       ├─ SettingsProvider   # 用户设置
   │       ├─ LayoutProvider     # 布局状态
   │       ├─ SyncProvider       # 数据同步
+  │       ├─ GlobalSyncProvider # 全局同步
   │       ├─ PromptProvider     # Prompt 状态
   │       ├─ FileProvider       # 文件管理
   │       ├─ TerminalProvider   # 终端管理
@@ -516,7 +661,6 @@ interface Settings {
   theme: string                  // 主题
   colorScheme: "light" | "dark"  // 明暗模式
   language: string               // 语言
-  // ... 更多设置项
 }
 ```
 
@@ -559,7 +703,6 @@ interface LayoutContext {
   activeProject: Project         // 当前项目
   activeSession: Session         // 当前会话
   tabs: Tab[]                    // 标签页
-  // ... 更多布局状态
 }
 ```
 
@@ -574,14 +717,65 @@ interface LayoutContext {
 | `addTab()` | 添加标签页 |
 | `removeTab()` | 移除标签页 |
 
+#### FileProvider (src/context/file.tsx)
+
+**职责**: 文件管理
+
+**子目录文件 (src/context/file/):**
+
+| 文件 | 作用 |
+|------|------|
+| `content-cache.ts` | 内容缓存 |
+| `path.ts` | 路径处理 |
+| `tree-store.ts` | 文件树存储 |
+| `types.ts` | 类型定义 |
+| `view-cache.ts` | 视图缓存 |
+| `watcher.ts` | 文件监听器 |
+
+**关键函数**:
+
+| 函数 | 作用 |
+|------|------|
+| `createFileContext()` | 创建文件上下文 |
+| `loadFileTree()` | 加载文件树 |
+| `readFileContent()` | 读取文件内容 |
+| `watchChanges()` | 监听文件变更 |
+
+#### GlobalSyncProvider (src/context/global-sync.tsx)
+
+**职责**: 全局同步（多项目）
+
+**子目录文件 (src/context/global-sync/):**
+
+| 文件 | 作用 |
+|------|------|
+| `bootstrap.ts` | 引导初始化 |
+| `child-store.ts` | 子存储 |
+| `event-reducer.ts` | 事件归约器 |
+| `eviction.ts` | 驱逐策略 |
+| `queue.ts` | 队列管理 |
+| `session-cache.ts` | 会话缓存 |
+| `session-load.ts` | 会话加载 |
+| `session-prefetch.ts` | 会话预取 |
+| `session-trim.ts` | 会话裁剪 |
+| `types.ts` | 类型定义 |
+| `utils.ts` | 工具函数 |
+
+**关键函数**:
+
+| 函数 | 作用 |
+|------|------|
+| `createGlobalSyncContext()` | 创建全局同步上下文 |
+| `syncProjects()` | 同步项目列表 |
+| `prefetchSessions()` | 预取会话 |
+| `evictCache()` | 清理缓存 |
+
 #### 其他 Provider 速查
 
 | Provider | 文件 | 主要作用 |
 |----------|------|----------|
 | `SyncProvider` | `sync.tsx` | 数据同步（会话列表等） |
-| `GlobalSyncProvider` | `global-sync.tsx` | 全局同步（多项目） |
 | `PromptProvider` | `prompt.tsx` | Prompt 状态管理 |
-| `FileProvider` | `file.tsx` | 文件管理 |
 | `TerminalProvider` | `terminal.tsx` | 终端管理 |
 | `CommandProvider` | `command.tsx` | 命令注册/快捷键 |
 | `ModelsProvider` | `models.tsx` | 模型管理 |
@@ -592,81 +786,119 @@ interface LayoutContext {
 | `LanguageProvider` | `language.tsx` | 国际化 |
 | `PlatformProvider` | `platform.tsx` | 平台抽象层 |
 | `LocalProvider` | `local.tsx` | 本地状态 |
+| `GlobalSDKProvider` | `global-sdk.tsx` | 全局 SDK |
 
 ---
 
 ## 六、核心组件分析
 
-### 6.1 PromptInput (src/components/prompt-input.tsx)
+### 6.1 Components 目录完整列表
 
-**职责**: 提示输入框（核心交互组件）
+#### PromptInput 子模块 (src/components/prompt-input/)
 
-#### 组件结构
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                   PromptInput 组件                        │
-└─────────────────────────────────────────────────────────┘
-
-PromptInput
-  │
-  ├─ 输入区域
-  │   └─ textarea (支持多行)
-  │
-  ├─ 附件区域
-  │   └─ 文件/图片预览
-  │
-  ├─ 工具栏
-  │   ├─ 代理选择器
-  │   ├─ 模型选择器
-  │   └─ 发送按钮
-  │
-  └─ 自动调整高度
-      └─ 根据内容调整 textarea 高度
-```
-
-#### 关键函数
-
-| 函数 | 作用 |
+| 文件 | 作用 |
 |------|------|
-| `PromptInput` | 主组件 |
-| `handleSubmit()` | 处理提交 |
-| `handleKeyDown()` | 处理键盘事件 |
-| `autoResize()` | 自动调整高度 |
-| `addAttachment()` | 添加附件 |
-| `removeAttachment()` | 移除附件 |
+| `attachments.ts` | 附件管理 |
+| `build-request-parts.ts` | 构建请求部分 |
+| `context-items.tsx` | 上下文项 |
+| `drag-overlay.tsx` | 拖拽覆盖层 |
+| `editor-dom.ts` | 编辑器 DOM 操作 |
+| `files.ts` | 文件处理 |
+| `history.ts` | 历史记录 |
+| `image-attachments.tsx` | 图片附件 |
+| `paste.ts` | 粘贴处理 |
+| `placeholder.ts` | 占位符 |
+| `slash-popover.tsx` | 斜杠命令弹出框 |
+| `submit.ts` | 提交处理 |
 
-### 6.2 FileTree (src/components/file-tree.tsx)
+#### Session 组件子模块 (src/components/session/)
 
-**职责**: 文件树组件
-
-#### 关键函数
-
-| 函数 | 作用 |
+| 文件 | 作用 |
 |------|------|
-| `FileTree` | 主组件 |
-| `loadFiles()` | 加载文件列表 |
-| `toggleFolder()` | 切换文件夹展开/折叠 |
-| `selectFile()` | 选择文件 |
+| `session-context-breakdown.ts` | 上下文分解 |
+| `session-context-format.ts` | 上下文格式 |
+| `session-context-metrics.ts` | 上下文指标 |
+| `session-context-tab.tsx` | 上下文标签 |
+| `session-header.tsx` | 会话头部 |
+| `session-new-view.tsx` | 新会话视图 |
+| `session-sortable-tab.tsx` | 可排序标签 |
+| `session-sortable-terminal-tab.tsx` | 可排序终端标签 |
 
-### 6.3 Terminal (src/components/terminal.tsx)
+#### 对话框组件 (src/components/)
 
-**职责**: 终端组件
-
-#### 关键函数
-
-| 函数 | 作用 |
+| 文件 | 作用 |
 |------|------|
-| `Terminal` | 主组件 |
-| `initTerminal()` | 初始化终端 |
-| `executeCommand()` | 执行命令 |
-| `resizeTerminal()` | 调整终端大小 |
+| `dialog-connect-provider.tsx` | 连接提供商对话框 |
+| `dialog-custom-provider.tsx` | 自定义提供商对话框 |
+| `dialog-edit-project.tsx` | 编辑项目对话框 |
+| `dialog-fork.tsx` | 分叉对话框 |
+| `dialog-manage-models.tsx` | 管理模型对话框 |
+| `dialog-release-notes.tsx` | 发布说明对话框 |
+| `dialog-select-directory.tsx` | 选择目录对话框 |
+| `dialog-select-file.tsx` | 选择文件对话框 |
+| `dialog-select-mcp.tsx` | 选择 MCP 对话框 |
+| `dialog-select-model.tsx` | 选择模型对话框 |
+| `dialog-select-model-unpaid.tsx` | 选择模型对话框（未付费） |
+| `dialog-select-provider.tsx` | 选择提供商对话框 |
+| `dialog-select-server.tsx` | 选择服务器对话框 |
+| `dialog-settings.tsx` | 设置对话框 |
+
+#### 设置组件 (src/components/)
+
+| 文件 | 作用 |
+|------|------|
+| `settings-general.tsx` | 通用设置 |
+| `settings-keybinds.tsx` | 快捷键设置 |
+| `settings-list.tsx` | 设置列表 |
+| `settings-models.tsx` | 模型设置 |
+| `settings-providers.tsx` | 提供商设置 |
+
+#### 其他组件 (src/components/)
+
+| 文件 | 作用 |
+|------|------|
+| `debug-bar.tsx` | 调试栏 |
+| `file-tree.tsx` | 文件树 |
+| `link.tsx` | 链接组件 |
+| `model-tooltip.tsx` | 模型工具提示 |
+| `prompt-input.tsx` | 提示输入框（核心） |
+| `session-context-usage.tsx` | 会话使用情况 |
+| `status-popover.tsx` | 状态弹出框 |
+| `terminal.tsx` | 终端组件 |
+| `titlebar.tsx` | 标题栏 |
 
 ---
 
 ## 七、工具函数分析
 
-### 7.1 持久化存储 (src/utils/persist.ts)
+### 7.1 Utils 目录完整列表 (34 个文件)
+
+| 文件 | 作用 |
+|------|------|
+| `agent.ts` | 代理辅助函数 |
+| `aim.ts` | 目标辅助 |
+| `base64.ts` | Base64 编解码 |
+| `comment-note.ts` | 注释笔记 |
+| `diffs.ts` | 差异计算 |
+| `id.ts` | ID 生成 |
+| `notification-click.ts` | 通知点击处理 |
+| `persist.ts` | 持久化存储封装 |
+| `prompt.ts` | 提示辅助函数 |
+| `runtime-adapters.ts` | 运行时适配器 |
+| `same.ts` | 相等比较 |
+| `scoped-cache.ts` | 作用域缓存 |
+| `server-errors.ts` | 服务器错误解析 |
+| `server-health.ts` | 服务器健康检查 |
+| `server.ts` | 服务器辅助函数 |
+| `session-title.ts` | 会话标题生成 |
+| `solid-dnd.tsx` | SolidJS 拖拽适配 |
+| `sound.ts` | 声音播放 |
+| `terminal-writer.ts` | 终端写入器 |
+| `time.ts` | 时间格式化 |
+| `uuid.ts` | UUID 生成 |
+| `worktree.ts` | Git worktree 管理 |
+
+### 7.2 持久化存储 (src/utils/persist.ts)
 
 **职责**: localStorage 封装
 
@@ -686,7 +918,7 @@ const data = await persist.get()
 | `persist.set(data)` | 存储数据 |
 | `persist.remove()` | 删除数据 |
 
-### 7.2 Base64 编解码 (src/utils/base64.ts)
+### 7.3 Base64 编解码 (src/utils/base64.ts)
 
 **职责**: Base64 编解码（用于编码目录路径）
 
@@ -697,7 +929,7 @@ const data = await persist.get()
 | `encodeBase64(str)` | 编码为 Base64 |
 | `decodeBase64(str)` | 解码 Base64 |
 
-### 7.3 健康检查 (src/utils/server-health.ts)
+### 7.4 健康检查 (src/utils/server-health.ts)
 
 **职责**: 服务器健康检查
 
@@ -708,7 +940,7 @@ const data = await persist.get()
 | `checkHealth(url)` | 检查服务器健康状态 |
 | `parseHealthStatus(status)` | 解析健康状态 |
 
-### 7.4 Git Worktree 管理 (src/utils/worktree.ts)
+### 7.5 Git Worktree 管理 (src/utils/worktree.ts)
 
 **职责**: Git worktree 管理
 
@@ -724,12 +956,28 @@ const data = await persist.get()
 
 ## 八、国际化
 
-### 8.1 字典文件
+### 8.1 字典文件 (18 个语言文件)
 
-| 文件 | 作用 |
+| 文件 | 语言 |
 |------|------|
-| `src/i18n/en.ts` | 英文翻译字典 |
-| `src/i18n/zh.ts` | 中文翻译字典 |
+| `ar.ts` | 阿拉伯语 |
+| `br.ts` | 布列塔尼语 |
+| `bs.ts` | 波斯尼亚语 |
+| `da.ts` | 丹麦语 |
+| `de.ts` | 德语 |
+| `en.ts` | 英语 |
+| `es.ts` | 西班牙语 |
+| `fr.ts` | 法语 |
+| `ja.ts` | 日语 |
+| `ko.ts` | 韩语 |
+| `no.ts` | 挪威语 |
+| `pl.ts` | 波兰语 |
+| `ru.ts` | 俄语 |
+| `th.ts` | 泰语 |
+| `tr.ts` | 土耳其语 |
+| `zh.ts` | 简体中文 |
+| `zht.ts` | 繁体中文 |
+| `parity.test.ts` |  parity 测试 |
 
 ### 8.2 键名规范
 
@@ -798,13 +1046,30 @@ cd packages/app && bun test
 cd packages/app && npx playwright test
 ```
 
-#### 测试探针 (src/testing/)
+### 10.3 Testing 探针 (src/testing/)
 
-用于 E2E 测试的特殊组件和工具。
+用于 E2E 测试的特殊组件和工具：
+
+| 文件 | 作用 |
+|------|------|
+| `model-selection.ts` | 模型选择测试探针 |
+| `prompt.ts` | Prompt 测试探针 |
+| `session-composer.ts` | Session Composer 测试探针 |
+| `terminal.ts` | 终端测试探针 |
 
 ---
 
-## 十一、架构总结
+## 十一、Hooks
+
+### src/hooks/ 目录
+
+| 文件 | 作用 |
+|------|------|
+| `use-providers.ts` | Provider 列表获取钩子 |
+
+---
+
+## 十二、架构总结
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -818,11 +1083,20 @@ cd packages/app && npx playwright test
 │                    页面组件                               │
 │  HomeRoute  │  DirectoryLayout  │  SessionRoute          │
 ├─────────────────────────────────────────────────────────┤
-│                    共享组件                               │
-│  PromptInput  │  FileTree  │  Terminal  │  Dialogs       │
+│                    共享组件 (43个)                        │
+│  PromptInput  │  FileTree  │  Terminal  │  Dialogs (14)  │
+│  Settings (5) │  StatusPopover  │  SessionContext        │
 ├─────────────────────────────────────────────────────────┤
-│                    工具函数                               │
+│                    Context Provider (46个)                │
+│  Server  │  Settings  │  SDK  │  Layout  │  File (8)     │
+│  GlobalSync (15) │  Terminal  │  Command  │  Models      │
+├─────────────────────────────────────────────────────────┤
+│                    工具函数 (34个)                        │
 │  persist  │  base64  │  server-health  │  worktree       │
+├─────────────────────────────────────────────────────────┤
+│                    国际化 (18种语言)                      │
+│  ar, br, bs, da, de, en, es, fr, ja, ko, no, pl, ru,    │
+│  th, tr, zh, zht                                         │
 ├─────────────────────────────────────────────────────────┤
 │                    SDK 调用层                             │
 │  @opencode-ai/sdk → HTTP API → opencode server          │
@@ -835,5 +1109,7 @@ cd packages/app && npx playwright test
 2. **响应式 UI**: SolidJS 信号系统实现高效渲染
 3. **渐进式加载**: 会话消息历史窗口化加载
 4. **数据预取**: 智能预取会话数据，提升体验
-5. **国际化支持**: 完整的 i18n 实现
+5. **国际化支持**: 18 种语言完整支持
 6. **多端适配**: 同时支持 Web 和 Desktop (Tauri)
+7. **完整组件库**: 43 个应用组件，14 个对话框，5 个设置面板
+8. **测试覆盖**: 大量单元测试文件覆盖核心逻辑
