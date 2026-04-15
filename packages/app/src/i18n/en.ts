@@ -438,6 +438,9 @@ export const dict = {
 
   "toast.file.loadFailed.title": "Failed to load file",
   "toast.file.listFailed.title": "Failed to list files",
+  "toast.file.refresh.title": "Refresh file",
+  "toast.file.refresh.success.title": "File refreshed",
+  "toast.file.refresh.failed.title": "Failed to refresh file",
 
   "toast.context.noLineSelection.title": "No line selection",
   "toast.context.noLineSelection.description": "Select a line range in a file tab first.",

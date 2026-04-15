@@ -38,6 +38,7 @@ opencode/
 │   ├── app/                   # Web 应用（SolidJS 前端）
 │   ├── ui/                    # 共享 UI 组件库
 │   ├── desktop/               # Tauri 桌面应用
+│   ├── desktop-electron/      # Electron 桌面应用
 │   ├── sdk/                   # JavaScript SDK
 │   ├── plugin/                # 插件系统
 │   ├── util/                  # 共享工具
@@ -127,9 +128,10 @@ opencode/
                    │
           ┌────────┼────────┐
           ▼        ▼        ▼
-    ┌────────┐ ┌──────┐ ┌──────┐
-    │desktop │ │console│ │ web  │
-    └────────┘ └──────┘ └──────┘
+    ┌────────┐ ┌────────┐ ┌──────┐
+    │desktop │ │desktop │ │console│
+    │(Tauri) │ │electron│ │      │
+    └────────┘ └────────┘ └──────┘
 
     ┌─────────────────────────────────┐
     │          opencode (核心)         │
@@ -140,7 +142,7 @@ opencode/
       (API 调用)     (SDK 调用)
            │              │
     ┌──────┴──────────────┴──────┐
-    │         app/desktop         │
+    │    app/desktop/electron     │
     └─────────────────────────────┘
 ```
 
@@ -154,13 +156,13 @@ opencode/
 ┌─────────────────────────────────────────────────────────┐
 │                    用户界面层                              │
 │                                                         │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌─────────┐ │
-│  │ Desktop  │  │   App    │  │  Console │  │   Web   │ │
-│  │ (Tauri)  │  │ (Web)    │  │ (管理)   │  │ (Astro) │ │
-│  └────┬─────┘  └────┬─────┘  └──────────┘  └─────────┘ │
-│       │              │                                    │
-│       └──────────────┼────────────────────────────────────┘
-│                      ▼
+│  ┌──────────┐  ┌──────────────┐  ┌──────────┐  ┌─────────┐ │
+│  │ Desktop  │  │Desktop       │  │   App    │  │  Console │ │
+│  │ (Tauri)  │  │(Electron)    │  │ (Web)    │  │ (管理)   │ │
+│  └────┬─────┘  └────┬─────────┘  └────┬─────┘  └─────────┘ │
+│       │              │              │                                    │
+│       └──────────────┼──────────────┼────────────────────────────────────┘
+│                      ▼              ▼
 ├─────────────────────────────────────────────────────────┤
 │                    共享组件层                              │
 │                                                         │
@@ -677,6 +679,19 @@ const ReadTool = Tool.defineEffect("read", Effect.gen(function* () {
 | `bun dev:desktop` | 启动 Tauri 桌面应用 |
 | `bun typecheck` | 类型检查所有包 |
 
+### 桌面应用命令
+
+| 命令 | 说明 |
+|------|------|
+| `bun run --cwd packages/desktop tauri dev` | Tauri 桌面开发模式 |
+| `bun run --cwd packages/desktop tauri build` | Tauri 桌面构建 |
+| `cd packages/desktop-electron && bun dev` | Electron 桌面开发模式 |
+| `cd packages/desktop-electron && bun build` | Electron 桌面构建 |
+| `cd packages/desktop-electron && bun package` | Electron 打包所有平台 |
+| `cd packages/desktop-electron && bun package:win` | Electron 仅打包 Windows |
+| `cd packages/desktop-electron && bun package:mac` | Electron 仅打包 macOS |
+| `cd packages/desktop-electron && bun package:linux` | Electron 仅打包 Linux |
+
 ### 包级别命令（需在包目录下执行）
 
 | 命令 | 说明 |
@@ -729,7 +744,8 @@ const ReadTool = Tool.defineEffect("read", Effect.gen(function* () {
 | opencode | TypeScript | 200+ | 核心业务逻辑 |
 | app | TypeScript/TSX | 100+ | Web 前端 |
 | ui | TypeScript/TSX | 250+ | UI 组件库 |
-| desktop | TypeScript/Rust | 30+ | 桌面打包 |
+| desktop (Tauri) | TypeScript/Rust | 100+ | Tauri 桌面打包 |
+| desktop-electron | TypeScript | 67 | Electron 桌面打包 |
 | sdk | TypeScript | 50+ | JS SDK |
 | plugin | TypeScript | 10+ | 插件 SDK |
 | console | TypeScript | 40+ | 管理后台 |
@@ -744,7 +760,8 @@ OpenCode 是一个设计良好的 monorepo 项目，采用清晰的 **三层架�
 - **CLI**: 命令行工具，直接运行 `opencode`
 - **TUI**: 终端用户界面，提供交互式 AI 编程体验
 - **Web**: 浏览器访问，适合远程开发
-- **Desktop**: Tauri 打包的桌面应用
+- **Desktop (Tauri)**: Tauri 打包的轻量级桌面应用
+- **Desktop (Electron)**: Electron 打包的完整桌面应用（支持 WSL、嵌入式服务器）
 
 核心设计亮点：
 1. **Effect 效果系统**: 类型安全的错误处理和资源管理

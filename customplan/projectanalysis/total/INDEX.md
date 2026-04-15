@@ -11,9 +11,11 @@ customplan/projectanalysis/total/
 ├── 02-opencode-core.md        # 核心包 (opencode) 详细分析
 ├── 03-app-web.md              # Web 应用包 (app) 详细分析
 ├── 04-ui-components.md        # UI 组件库包 (ui) 详细分析
-├── 05-desktop.md              # 桌面应用包 (desktop) 详细分析
+├── 05-desktop.md              # 桌面应用包 (desktop Tauri) 详细分析
 ├── 06-sdk.md                  # JavaScript SDK 包 (sdk) 详细分析
 ├── 07-plugin.md               # 插件系统包 (plugin) 详细分析
+├── 08-desktop-electron.md     # 桌面应用包 (desktop-electron) 详细分析
+├── 09-app-frontend.md         # 前端 UI 详细分析 (SolidJS Web 应用)
 └── INDEX.md                   # 本文档 (索引)
 ```
 
@@ -51,9 +53,20 @@ customplan/projectanalysis/total/
 | 主题系统 | 04-ui-components.md | 四章 (37 个主题) |
 | Tauri 架构 | 05-desktop.md | 三章 |
 | Rust 后端 | 05-desktop.md | 五章 (13 个文件) |
+| Electron 架构 | 08-desktop-electron.md | 三章 |
+| 嵌入式服务器 | 08-desktop-electron.md | 四.3 章 |
+| IPC 通信 | 08-desktop-electron.md | 四.4 章 (36 个通道) |
+| WSL 支持 | 08-desktop-electron.md | 四.9 章 |
 | SDK API | 06-sdk.md | 五章 |
 | SDK 生成流程 | 06-sdk.md | 三章 |
 | 插件开发 | 07-plugin.md | 五、九章 |
+| 前端路由配置 | 09-app-frontend.md | 三章 |
+| 前端页面组件 | 09-app-frontend.md | 四章 (8 个页面) |
+| 前端 Context Provider | 09-app-frontend.md | 五章 (19 个 Provider) |
+| 前端业务组件 | 09-app-frontend.md | 六章 (~60 个组件) |
+| 前端状态管理 | 09-app-frontend.md | 七章 |
+| 前端国际化 | 09-app-frontend.md | 九章 (18 种语言) |
+| 前端工具函数 | 09-app-frontend.md | 八章 (34 个工具) |
 
 ---
 
@@ -108,7 +121,7 @@ customplan/projectanalysis/total/
 | pierre/ | 11 个文件 |
 | styles/ | 7 个文件 |
 
-### desktop 桌面应用包 (100+ 个)
+### desktop 桌面应用包 (Tauri) (100+ 个)
 
 | 类别 | 数量 |
 |------|------|
@@ -120,6 +133,19 @@ customplan/projectanalysis/total/
 | src-tauri/icons/prod/ | 同 beta 结构 |
 | scripts/ | 5 个构建脚本 |
 | 配置文件 | 7 个 (tauri.conf, tauri.beta.conf, tauri.prod.conf, capabilities, Cargo.toml, Cargo.lock, entitlements.plist) |
+
+### desktop-electron 桌面应用包 (Electron) (67 个)
+
+| 类别 | 数量 |
+|------|------|
+| src/main/ | 14 个主进程文件 |
+| src/preload/ | 2 个预加载文件 |
+| src/renderer/ | 21 个渲染器文件 |
+| src/renderer/i18n/ | 16 个语言文件 (15 种语言 + 1 入口) |
+| scripts/ | 7 个构建脚本 |
+| icons/ | 3 通道目录 (dev/beta/prod) |
+| 配置文件 | 4 个 (electron-vite, electron-builder, package.json, tsconfig.json) |
+| 文档 | 3 个 (AGENTS.md, README.md, icons/README.md) |
 
 ### sdk JavaScript SDK 包 (38 个)
 
@@ -225,6 +251,31 @@ customplan/projectanalysis/total/
 | 持久化 | `createPersist()` | 本地存储 |
 | 健康检查 | `checkHealth()` | 健康检查 |
 
+### app 前端详细 (SolidJS)
+
+| 模块 | 关键组件/函数 | 作用 |
+|------|---------------|------|
+| 路由 | `app.tsx` 路由配置 | `/`, `/:dir`, `/:dir/session/:id?` |
+| 首页 | `home.tsx` | 项目选择器 + 服务器选择 |
+| 主布局 | `layout.tsx` (~2500 行) | 侧边栏 + 内容区 + 拖放重排序 |
+| 目录布局 | `directory-layout.tsx` | 目录级 SDK/Sync 包装器 |
+| 会话页面 | `session.tsx` (~2000 行) | 聊天时间线 + 文件标签 + 终端 |
+| 消息时间线 | `message-timeline.tsx` (~1100 行) | 消息历史渲染 + 分页加载 |
+| 终端面板 | `terminal-panel.tsx` (~324 行) | PTY 终端 + 可排序标签 |
+| 文件标签 | `file-tabs.tsx` (~502 行) | 多文件查看 + 评论 + 滚动同步 |
+| 提示输入 | `prompt-input/` (12 个组件) | 富文本输入 + 附件 + 斜杠命令 |
+| 对话框 | `dialog-*.tsx` (13 个组件) | 目录/文件/模型/服务器选择器 |
+| 会话组件 | `session/` (8 个组件) | 上下文使用 + 会话头部 + 新建视图 |
+| 文件树 | `file-tree.tsx` | 虚拟化文件树 + 展开/折叠 |
+| 终端 | `terminal.tsx` | Ghostty 终端包装器 |
+| 持久化 | `persist.ts` | LRU 缓存 + 配额淘汰 + 迁移 |
+| 作用域缓存 | `scoped-cache.ts` | 会话级 LRU 缓存 |
+| 平台抽象 | `PlatformProvider` | Web vs Desktop 适配 |
+| 命令系统 | `CommandProvider` | 命令注册 + 快捷键解析 |
+| 通知系统 | `NotificationProvider` | 回合完成/错误通知 |
+| 评论系统 | `CommentsProvider` | 行评论 + 选择范围 |
+| 国际化 | `LanguageProvider` + `i18n/` | 18 种语言 + 懒加载 |
+
 ### ui 组件库包
 
 | 类别 | 组件 | 作用 |
@@ -237,7 +288,7 @@ customplan/projectanalysis/total/
 | 文本 | `TextReveal`, `TextShimmer`, `TextStrikethrough`, `ThinkingHeading`, `LineComment` | 文本组件 |
 | 其他 | `MotionSpring`, `Keybind` | 其他组件 |
 
-### desktop 桌面应用包
+### desktop 桌面应用包 (Tauri)
 
 | 模块 | 关键函数 | 作用 |
 |------|----------|------|
@@ -247,6 +298,29 @@ customplan/projectanalysis/total/
 | 命令 | `.invoke_handler()` | 注册命令 |
 | 运行 | `.run()` | 运行应用 |
 | 更新 | `checkForUpdates()` | 检查更新 |
+
+### desktop-electron 桌面应用包 (Electron)
+
+| 模块 | 关键函数 | 作用 |
+|------|----------|------|
+| 主进程入口 | `setupApp()`, `initialize()` | 应用初始化 |
+| 服务器 | `spawnLocalServer()` | 启动嵌入式服务器 |
+| 服务器 | `checkHealth()` | 健康检查 |
+| 服务器 | `prepareServerEnv()` | 准备服务器环境 |
+| 窗口 | `createMainWindow()`, `createLoadingWindow()` | 创建窗口 |
+| 窗口 | `setTitlebar()`, `setDockIcon()`, `setBackgroundColor()` | 窗口样式 |
+| IPC | `registerIpcHandlers()` | 注册 36 个 IPC 通道 |
+| IPC | `sendSqliteMigrationProgress()`, `sendMenuCommand()`, `sendDeepLinks()` | 发送事件 |
+| 菜单 | `createMenu()` | 创建 macOS 应用菜单 |
+| 存储 | `getStore()`, `store` | electron-store 封装 |
+| 日志 | `initLogging()`, `tail()` | 日志系统 |
+| 更新 | `checkForUpdates()`, `checkUpdate()`, `installUpdate()` | 自动更新 |
+| 常量 | `CHANNEL`, `UPDATER_ENABLED` | 通道配置 |
+| WSL | `getWslConfig()`, `setWslConfig()` | WSL 配置 |
+| 预加载 | `api` (ElectronAPI) | 暴露 42 个 API 方法 |
+| 渲染器 | `createPlatform()` | 平台抽象层 |
+| 渲染器 | `runUpdater()` | 渲染器端更新检查 |
+| 渲染器 | `webviewZoom` | 页面缩放控制 |
 
 ### sdk JavaScript SDK 包
 
@@ -274,26 +348,26 @@ customplan/projectanalysis/total/
 ### 三层架构
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    用户界面层                              │
-│  Desktop (Tauri)  │  App (Web)  │  Console  │  Web (Astro)│
-└──────────────────────┬──────────────────────────────────┘
-                       ▼
-┌─────────────────────────────────────────────────────────┐
-│                    共享组件层                              │
-│                   UI Components (188 个)                  │
-└──────────────────────┬──────────────────────────────────┘
-                       ▼
-┌─────────────────────────────────────────────────────────┐
-│                    核心业务层                              │
+┌─────────────────────────────────────────────────────────────────┐
+│                        用户界面层                                  │
+│  Desktop (Tauri)  │  Desktop-Electron  │  App (Web)  │  Console  │
+└────────────────────────┬────────────────────────────────────────┘
+                         ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                        共享组件层                                  │
+│                       UI Components (188 个)                      │
+└────────────────────────┬────────────────────────────────────────┘
+                         ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                        核心业务层                                  │
 │  Server (Hono 113端点) │ CLI (15命令) │ TUI │ Agent (7) │
-│  Tool (44文件) │ Session (18子模块) │ Provider (34)      │
-└──────────────────────┬──────────────────────────────────┘
-                       ▼
-┌─────────────────────────────────────────────────────────┐
-│                    基础设施层                              │
-│  SDK (38文件) │ Bus │ Storage (SQLite) │ Util (12)      │
-└─────────────────────────────────────────────────────────┘
+│  Tool (44文件) │ Session (18子模块) │ Provider (34)              │
+└────────────────────────┬────────────────────────────────────────┘
+                         ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                        基础设施层                                  │
+│  SDK (38文件) │ Bus │ Storage (SQLite) │ Util (12)              │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 ### 包依赖关系
@@ -320,9 +394,10 @@ customplan/projectanalysis/total/
           ┌────────┼────────┐
           ▼        ▼        ▼
     ┌────────┐ ┌────── ┌──────┐
-    │desktop │ │console│ │ web  │
-    │(100+)  │ │       │ │      │
-    └────────┘ └──────┘ └──────
+    │desktop │ │desktop│ │console│
+    │(Tauri) │ │electron│ │     │
+    │(100+)  │ │(67)   │ │     │
+    └────────┘ └──────┘ └──────┘
 
     ┌─────────────────────────────────┐
     │          opencode (核心)         │
@@ -337,13 +412,14 @@ customplan/projectanalysis/total/
 | 层次 | 技术 |
 |------|------|
 | 语言 | TypeScript (严格模式), Rust |
-| 运行时 | Bun 1.3+ |
+| 运行时 | Bun 1.3+, Node.js (Electron) |
 | 前端框架 | SolidJS 1.9 |
 | 样式 | TailwindCSS 4 |
 | UI 组件 | @kobalte/core (无头组件) |
-| 构建 | Vite 7 |
+| 构建 | Vite 7, electron-vite |
 | 后端框架 | Hono (Web) + Effect (效果系统) |
-| 桌面 | Tauri 2.x + Rust |
+| 桌面 (Tauri) | Tauri 2.x + Rust |
+| 桌面 (Electron) | Electron 40.4.1 + electron-builder |
 | 数据库 | SQLite (Drizzle ORM) |
 | 包管理 | Bun workspaces + Turbo |
 | AI SDK | @ai-sdk/* (34 个提供商) |
@@ -371,8 +447,14 @@ customplan/projectanalysis/total/
 | `cd packages/sdk/js && bun run script/build.ts` | 生成 SDK |
 | `cd packages/sdk/js && bun run script/publish.ts` | 发布 SDK |
 | `cd packages/plugin && bun run script/publish.ts` | 发布插件 |
-| `bun run --cwd packages/desktop tauri dev` | 桌面开发 |
-| `bun run --cwd packages/desktop tauri build` | 桌面构建 |
+| `bun run --cwd packages/desktop tauri dev` | Tauri 桌面开发 |
+| `bun run --cwd packages/desktop tauri build` | Tauri 桌面构建 |
+| `cd packages/desktop-electron && bun dev` | Electron 桌面开发 |
+| `cd packages/desktop-electron && bun build` | Electron 桌面构建 |
+| `cd packages/desktop-electron && bun package` | Electron 打包 |
+| `cd packages/desktop-electron && bun package:win` | 仅打包 Windows |
+| `cd packages/desktop-electron && bun package:mac` | 仅打包 macOS |
+| `cd packages/desktop-electron && bun package:linux` | 仅打包 Linux |
 
 ---
 

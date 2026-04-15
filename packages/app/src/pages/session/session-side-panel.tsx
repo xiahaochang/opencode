@@ -1,8 +1,9 @@
-import { For, Match, Show, Switch, createEffect, createMemo, onCleanup, type JSX } from "solid-js"
+import { For, Match, Show, Switch, createEffect, createMemo, createSignal, onCleanup, type JSX } from "solid-js"
 import { createStore } from "solid-js/store"
 import { createMediaQuery } from "@solid-primitives/media"
 import { Tabs } from "@opencode-ai/ui/tabs"
 import { IconButton } from "@opencode-ai/ui/icon-button"
+import { Spinner } from "@opencode-ai/ui/spinner"
 import { TooltipKeybind } from "@opencode-ai/ui/tooltip"
 import { ResizeHandle } from "@opencode-ai/ui/resize-handle"
 import { Mark } from "@opencode-ai/ui/logo"
@@ -11,6 +12,7 @@ import type { DragEvent } from "@thisbeyond/solid-dnd"
 import type { SnapshotFileDiff, VcsFileDiff } from "@opencode-ai/sdk/v2"
 import { ConstrainDragYAxis, getDraggableId } from "@/utils/solid-dnd"
 import { useDialog } from "@opencode-ai/ui/context/dialog"
+import { showToast } from "@opencode-ai/ui/toast"
 
 import FileTree from "@/components/file-tree"
 import { SessionContextUsage } from "@/components/session-context-usage"
@@ -140,6 +142,26 @@ export function SessionSidePanel(props: {
   const showAllFiles = () => {
     if (fileTreeTab() !== "changes") return
     layout.fileTree.setTab("all")
+  }
+
+  const [refreshing, setRefreshing] = createSignal(false)
+
+  const handleRefresh = async () => {
+    setRefreshing(true)
+    try {
+      await file.tree.refresh("")
+      showToast({
+        variant: "success",
+        title: language.t("toast.file.refresh.success.title"),
+      })
+    } catch {
+      showToast({
+        variant: "error",
+        title: language.t("toast.file.refresh.failed.title"),
+      })
+    } finally {
+      setRefreshing(false)
+    }
   }
 
   const [store, setStore] = createStore({
@@ -417,6 +439,20 @@ export function SessionSidePanel(props: {
                 </Tabs.Content>
               </Tabs>
             </div>
+            <Show when={fileOpen() && fileTreeTab() === "all"}>
+              <div class="absolute top-18 right-3 z-50 flex items-center justify-center bg-bg-surface/90 border border-border-base rounded-lg w-7 h-7 shadow-md">
+                <IconButton
+                  icon="bullet-list"
+                  variant="ghost"
+                  size="small"
+                  classList={{ "animate-spin": refreshing() }}
+                  onClick={handleRefresh}
+                  disabled={refreshing()}
+                  aria-label={language.t("toast.file.refresh.title")}
+                  title={language.t("toast.file.refresh.title")}
+                />
+              </div>
+            </Show>
             <Show when={fileOpen()}>
               <div onPointerDown={() => props.size.start()}>
                 <ResizeHandle
