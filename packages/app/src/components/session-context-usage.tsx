@@ -72,9 +72,21 @@ export function SessionContextUsage(props: SessionContextUsageProps) {
     })
   }
 
-  const circle = () => (
-    <div class="flex items-center justify-center">
-      <ProgressCircle size={16} strokeWidth={2} percentage={context()?.usage ?? 0} />
+  const formatTotal = (total: number) => {
+    if (total > 1024) {
+      return (total / 1024).toFixed(1) + " K"
+    }
+    return total.toLocaleString(language.intl())
+  }
+
+  const circle = (showTotal = false) => (
+    <div class="flex flex-col items-center justify-center gap-0.5">
+      <ProgressCircle size={showTotal ? 20 : 16} strokeWidth={showTotal ? 2.5 : 2} percentage={context()?.usage ?? 50} />
+      <Show when={showTotal}>
+        <span class="absolute right-18 text-[10px] text-text-weak">
+          {context()?.total && formatTotal(context()!.total)}
+        </span>
+      </Show>
     </div>
   )
 
@@ -114,7 +126,7 @@ export function SessionContextUsage(props: SessionContextUsageProps) {
               onClick={openContext}
               aria-label={language.t("context.usage.view")}
             >
-              {circle()}
+              {circle(true)}
             </Button>
           </Match>
         </Switch>
