@@ -19,34 +19,10 @@ const dir = "resources/opencode-binaries"
 
 await $`mkdir -p ${dir}`
 
-// Try to download from current run first, if not found, get the latest successful run from publish workflow
+// Download artifact from current workflow run
 const runId = process.env.GITHUB_RUN_ID
-let downloadSuccess = false
-
-try {
-  await $`gh run download ${runId} -n ${artifact}`.cwd(dir)
-  downloadSuccess = true
-  console.log(`Downloaded artifact ${artifact} from current run ${runId}`)
-} catch (error) {
-  console.log(`Artifact ${artifact} not found in current run ${runId}, fetching from latest successful publish workflow...`)
-  try {
-    // Get the latest successful run ID from the publish workflow
-    const runOutput = await $`gh run list --workflow publish --status success --limit 1 --json databaseId --jq '.[0].databaseId'`.text()
-    const latestRunId = runOutput.trim()
-    if (latestRunId) {
-      await $`gh run download ${latestRunId} -n ${artifact}`.cwd(dir)
-      downloadSuccess = true
-      console.log(`Downloaded artifact ${artifact} from publish workflow run ${latestRunId}`)
-    }
-  } catch (e) {
-    console.error(`Failed to download artifact from publish workflow: ${e}`)
-  }
-}
-
-if (!downloadSuccess) {
-  console.error("no valid artifacts found to download")
-  process.exit(1)
-}
+await $`gh run download ${runId} -n ${artifact}`.cwd(dir)
+console.log(`Downloaded artifact ${artifact} from run ${runId}`)
 
 await copyBinaryToSidecarFolder(windowsify(`${dir}/${sidecarConfig.ocBinary}/bin/opencode`))
 

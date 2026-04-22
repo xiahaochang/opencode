@@ -48,8 +48,22 @@ jobs:
         run: bun install
 
       - name: Build OpenCode CLI
-        run: bun script/build-node.ts
-        working-directory: packages/opencode
+        run: ./packages/opencode/script/build.ts
+        working-directory: .
+        env:
+          OPENCODE_VERSION: ${{ github.event.inputs.version || '0.0.0-custom' }}
+          OPENCODE_RELEASE: 'false'
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload CLI Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: opencode-cli
+          path: |
+            packages/opencode/dist/opencode-darwin*
+            packages/opencode/dist/opencode-linux*
+            packages/opencode/dist/opencode-windows*
 
       - name: Prepare Desktop App
         run: bun ./scripts/prepare.ts
