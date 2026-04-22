@@ -1,4 +1,6 @@
 import { execFile } from "node:child_process"
+import { homedir } from "node:os"
+import { promises as fs } from "node:fs"
 import { BrowserWindow, Notification, app, clipboard, dialog, ipcMain, shell } from "electron"
 import type { IpcMainEvent, IpcMainInvokeEvent } from "electron"
 
@@ -87,10 +89,19 @@ export function registerIpcHandlers(deps: Deps) {
   ipcMain.handle(
     "open-directory-picker",
     async (_event: IpcMainInvokeEvent, opts?: { multiple?: boolean; title?: string; defaultPath?: string }) => {
+      const props: Array<"openDirectory" | "multiSelections"> = ["openDirectory"]
+      if (opts?.multiple) props.push("multiSelections")
+
+      // Ensure defaultPath is set on Linux to help GTK initialize properly
+      let defaultPath = opts?.defaultPath
+      if (process.platform === "linux" && !defaultPath) {
+        defaultPath = homedir()
+      }
+
       const result = await dialog.showOpenDialog({
-        properties: ["openDirectory", ...(opts?.multiple ? ["multiSelections" as const] : [])],
+        properties: props,
         title: opts?.title ?? "Choose a folder",
-        defaultPath: opts?.defaultPath,
+        defaultPath,
       })
       if (result.canceled) return null
       return opts?.multiple ? result.filePaths : result.filePaths[0]
@@ -145,6 +156,17 @@ export function registerIpcHandlers(deps: Deps) {
     const buffer = image.toPNG().buffer
     const size = image.getSize()
     return { buffer, width: size.width, height: size.height }
+  })
+
+  ipcMain.handle("stat-path", async (_event: IpcMainInvokeEvent, path: string) => {
+    try {
+      const stat = await fs.stat(path)
+      if (stat.isFile()) return "file"
+      if (stat.isDirectory()) return "directory"
+      return "other"
+    } catch {
+      return null
+    }
   })
 
   ipcMain.on("show-notification", (_event: IpcMainEvent, title: string, body?: string) => {

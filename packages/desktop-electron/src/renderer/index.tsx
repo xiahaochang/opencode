@@ -104,11 +104,37 @@ const createPlatform = (): Platform => {
 
     async openDirectoryPickerDialog(opts) {
       const defaultPath = await wslHome()
-      const result = await window.api.openDirectoryPicker({
+      let result = await window.api.openDirectoryPicker({
         multiple: opts?.multiple ?? false,
         title: opts?.title ?? t("desktop.dialog.chooseFolder"),
         defaultPath,
       })
+
+      // Workaround for Linux GTK issue: if a file is selected instead of folder, get parent directory
+      if (result && os === "linux") {
+        const normalize = (path: string) => {
+          const normalized = path.replace(/\\/g, "/")
+          return normalized.endsWith("/") ? normalized.slice(0, -1) : normalized
+        }
+
+        const processPath = async (path: string): Promise<string> => {
+          const normalized = normalize(path)
+          const stat = await window.api.statPath(normalized).catch(() => null)
+          if (stat === "file") {
+            // It's a file, return parent directory
+            const parent = normalized.substring(0, normalized.lastIndexOf("/"))
+            return parent || "/"
+          }
+          return normalized
+        }
+
+        if (Array.isArray(result)) {
+          result = await Promise.all(result.map(processPath))
+        } else {
+          result = await processPath(result)
+        }
+      }
+
       return await handleWslPicker(result)
     },
 
