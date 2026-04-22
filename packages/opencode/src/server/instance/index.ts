@@ -168,6 +168,92 @@ export const InstanceRoutes = (upgrade: UpgradeWebSocket): Hono =>
       },
     )
     .get(
+      "/git/graph",
+      describeRoute({
+        summary: "Get Git Graph data",
+        description:
+          "Retrieve Git commit history with branch visualization data, including commits, branches, and lane mapping.",
+        operationId: "git.graph",
+        responses: {
+          200: {
+            description: "Git Graph data",
+            content: {
+              "application/json": {
+                schema: resolver(Vcs.GitGraphData),
+              },
+            },
+          },
+        },
+      }),
+      validator(
+        "query",
+        z.object({
+          limit: z.coerce.number().default(100),
+          offset: z.coerce.number().default(0),
+        }),
+      ),
+      async (c) => {
+        const query = c.req.valid("query")
+        console.log("[API /git/graph] called with query:", query)
+        console.log("[API /git/graph] directory:", Instance.directory)
+        
+        return c.json(
+          await AppRuntime.runPromise(
+            Effect.gen(function* () {
+              const vcs = yield* Vcs.Service
+              const result = yield* vcs.graph({ limit: query.limit, offset: query.offset })
+              console.log("[API /git/graph] result commits:", result.commits.length)
+              return result
+            }),
+          ),
+        )
+      },
+    )
+    .get(
+      "/git/commit/:hash",
+      describeRoute({
+        summary: "Get commit details",
+        description: "Get file changes for a specific Git commit.",
+        operationId: "git.commit",
+        responses: {
+          200: {
+            description: "Commit details with file changes",
+            content: {
+              "application/json": {
+                schema: resolver(Vcs.CommitDetail),
+              },
+            },
+          },
+        },
+      }),
+      validator(
+        "param",
+        z.object({
+          hash: z.string(),
+        }),
+      ),
+      async (c) => {
+        const hash = c.req.valid("param").hash
+        console.log("[API /git/commit/:hash] called with hash:", hash)
+
+        try {
+          return c.json(
+            await AppRuntime.runPromise(
+              Effect.gen(function* () {
+                const vcs = yield* Vcs.Service
+                const result = yield* vcs.commit(hash)
+                console.log("[API /git/commit/:hash] result files:", result.files.length)
+                return result
+              }),
+            ),
+          )
+        } catch (error) {
+          console.error("[API /git/commit/:hash] error:", error)
+          return c.json({ error: String(error) }, 500)
+        }
+      },
+    )
+    .get(
       "/command",
       describeRoute({
         summary: "List commands",

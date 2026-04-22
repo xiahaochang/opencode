@@ -45,6 +45,8 @@ import type {
   FindSymbolsResponses,
   FindTextResponses,
   FormatterStatusResponses,
+  GitCommitResponses,
+  GitGraphResponses,
   GlobalConfigGetResponses,
   GlobalConfigUpdateErrors,
   GlobalConfigUpdateResponses,
@@ -4043,6 +4045,74 @@ export class Vcs extends HeyApiClient {
   }
 }
 
+export class Git extends HeyApiClient {
+  /**
+   * Get Git Graph data
+   *
+   * Retrieve Git commit history with branch visualization data, including commits, branches, and lane mapping.
+   */
+  public graph<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+      workspace?: string
+      limit?: number
+      offset?: number
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+            { in: "query", key: "limit" },
+            { in: "query", key: "offset" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).get<GitGraphResponses, unknown, ThrowOnError>({
+      url: "/git/graph",
+      ...options,
+      ...params,
+    })
+  }
+
+  /**
+   * Get commit details
+   *
+   * Get file changes for a specific Git commit.
+   */
+  public commit<ThrowOnError extends boolean = false>(
+    parameters: {
+      hash: string
+      directory?: string
+      workspace?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "path", key: "hash" },
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).get<GitCommitResponses, unknown, ThrowOnError>({
+      url: "/git/commit/{hash}",
+      ...options,
+      ...params,
+    })
+  }
+}
+
 export class Command extends HeyApiClient {
   /**
    * List commands
@@ -4255,6 +4325,11 @@ export class OpencodeClient extends HeyApiClient {
   private _vcs?: Vcs
   get vcs(): Vcs {
     return (this._vcs ??= new Vcs({ client: this.client }))
+  }
+
+  private _git?: Git
+  get git(): Git {
+    return (this._git ??= new Git({ client: this.client }))
   }
 
   private _command?: Command

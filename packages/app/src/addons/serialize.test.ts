@@ -45,9 +45,9 @@ describe("SerializeAddon", () => {
       await writeAndWait(term, input)
 
       const origLine = term.buffer.active.getLine(0)
-      expect(origLine!.getCell(0)!.isBold()).toBe(1)
-      expect(origLine!.getCell(5)!.isItalic()).toBe(1)
-      expect(origLine!.getCell(12)!.isUnderline()).toBe(1)
+      expect(origLine!.getCell(0)!.isBold()).toBe(true)
+      expect(origLine!.getCell(5)!.isItalic()).toBe(true)
+      expect(origLine!.getCell(12)!.isUnderline()).toBe(true)
 
       const serialized = addon.serialize({ range: { start: 0, end: 0 } })
 
@@ -59,15 +59,15 @@ describe("SerializeAddon", () => {
 
       const boldCell = line!.getCell(0)
       expect(boldCell!.getChars()).toBe("B")
-      expect(boldCell!.isBold()).toBe(1)
+      expect(boldCell!.isBold()).toBe(true)
 
       const italicCell = line!.getCell(5)
       expect(italicCell!.getChars()).toBe("I")
-      expect(italicCell!.isItalic()).toBe(1)
+      expect(italicCell!.isItalic()).toBe(true)
 
       const underCell = line!.getCell(12)
       expect(underCell!.getChars()).toBe("U")
-      expect(underCell!.isUnderline()).toBe(1)
+      expect(underCell!.isUnderline()).toBe(true)
     })
 
     test("should preserve basic 16-color foreground colors", async () => {
@@ -182,7 +182,7 @@ describe("SerializeAddon", () => {
       const origLine = term.buffer.active.getLine(0)
       const origFg = origLine!.getCell(0)!.getFgColor()
       const origBg = origLine!.getCell(0)!.getBgColor()
-      expect(origLine!.getCell(0)!.isBold()).toBe(1)
+      expect(origLine!.getCell(0)!.isBold()).toBe(true)
 
       const serialized = addon.serialize({ range: { start: 0, end: 0 } })
       const cleanSerialized = serialized.replace(/\x1b\[\d+X/g, "")

@@ -138,11 +138,84 @@ export namespace Vcs {
     })
   export type FileDiff = z.infer<typeof FileDiff>
 
+  export const GitCommit = z
+    .object({
+      hash: z.string(),
+      short_hash: z.string(),
+      message: z.string(),
+      author: z.string(),
+      author_date: z.number(),
+      parents: z.array(z.string()),
+      refs: z.array(z.string()).optional(),
+    })
+    .meta({
+      ref: "GitCommit",
+    })
+  export type GitCommit = z.infer<typeof GitCommit>
+
+  export const GitBranch = z
+    .object({
+      name: z.string(),
+      type: z.enum(["local", "remote"]),
+      commit_hash: z.string(),
+    })
+    .meta({
+      ref: "GitBranch",
+    })
+  export type GitBranch = z.infer<typeof GitBranch>
+
+  export const GitGraphData = z
+    .object({
+      commits: z.array(GitCommit),
+      branches: z.array(GitBranch),
+      current_branch: z.string(),
+      lane_map: z.record(z.string(), z.number()),
+    })
+    .meta({
+      ref: "GitGraphData",
+    })
+  export type GitGraphData = z.infer<typeof GitGraphData>
+
+  export const CommitFile = z
+    .object({
+      path: z.string(),
+      additions: z.number(),
+      deletions: z.number(),
+    })
+    .meta({
+      ref: "CommitFile",
+    })
+  export type CommitFile = z.infer<typeof CommitFile>
+
+  export const CommitStats = z
+    .object({
+      files_changed: z.number(),
+      insertions: z.number(),
+      deletions: z.number(),
+    })
+    .meta({
+      ref: "CommitStats",
+    })
+  export type CommitStats = z.infer<typeof CommitStats>
+
+  export const CommitDetail = z
+    .object({
+      hash: z.string(),
+      files: z.array(CommitFile),
+      stats: CommitStats,
+    })
+    .meta({
+      ref: "CommitDetail",
+    })
+  export type CommitDetail = z.infer<typeof CommitDetail>
+
   export interface Interface {
     readonly init: () => Effect.Effect<void>
     readonly branch: () => Effect.Effect<string | undefined>
     readonly defaultBranch: () => Effect.Effect<string | undefined>
     readonly diff: (mode: Mode) => Effect.Effect<FileDiff[]>
+    readonly graph: (options?: { limit?: number; offset?: number }) => Effect.Effect<GitGraphData>
+    readonly commit: (hash: string) => Effect.Effect<{ hash: string; files: Array<{ path: string; additions: number; deletions: number }>; stats: { files_changed: number; insertions: number; deletions: number } }>
   }
 
   interface State {
@@ -158,6 +231,31 @@ export namespace Vcs {
       const fs = yield* AppFileSystem.Service
       const git = yield* Git.Service
       const bus = yield* Bus.Service
+
+      const computeLanes = (commits: Git.Commit[]) => {
+        const laneMap = new Map<string, number>()
+        const lanePool: number[] = []
+        let nextLane = 0
+
+        for (const commit of commits) {
+          const parentLanes = commit.parents.map((p) => laneMap.get(p)).filter((l): l is number => l !== undefined)
+
+          let lane: number
+
+          if (parentLanes.length > 0) {
+            lane = parentLanes[0]
+            for (const l of parentLanes.slice(1)) {
+              lanePool.push(l)
+            }
+          } else {
+            lane = lanePool.pop() ?? nextLane++
+          }
+
+          laneMap.set(commit.hash, lane)
+        }
+
+        return laneMap
+      }
 
       const state = yield* InstanceState.make<State>(
         Effect.fn("Vcs.state")(function* (ctx) {
@@ -220,6 +318,47 @@ export namespace Vcs {
           const ref = yield* git.mergeBase(Instance.directory, value.root.ref)
           if (!ref) return []
           return yield* compare(fs, git, Instance.directory, ref)
+        }),
+        graph: Effect.fn("Vcs.graph")(function* (options?: { limit?: number; offset?: number }) {
+          const dir = Instance.directory
+          const limit = options?.limit ?? 100
+          const offset = options?.offset ?? 0
+          log.info("Vcs.graph called", { dir, limit, offset })
+
+          // 直接使用 git.log 的 offset 参数，避免获取过多数据
+          const commits = yield* git.log(dir, limit, offset)
+          log.info("git.log result", { count: commits.length })
+
+          const branches = yield* git.getBranches(dir)
+          log.info("git.getBranches result", { count: branches.length })
+
+          const currentBranch = yield* git.getCurrentBranch(dir)
+          log.info("git.getCurrentBranch result", { currentBranch })
+
+          // 在当前页数据上计算泳道
+          const laneMap = computeLanes(commits)
+          log.info("computeLanes result", { lanes: laneMap.size })
+
+          return {
+            commits,
+            branches,
+            current_branch: currentBranch ?? "HEAD",
+            lane_map: Object.fromEntries(laneMap.entries()),
+          } satisfies GitGraphData
+        }),
+        commit: Effect.fn("Vcs.commit")(function* (hash: string) {
+          const dir = Instance.directory
+          log.info("Vcs.commit called", { dir, hash })
+
+          // 获取提交的文件变更统计
+          const result = yield* git.showStat(dir, hash)
+          log.info("git.showStat result", { files: result.files.length, stats: result.stats })
+
+          return {
+            hash,
+            files: result.files,
+            stats: result.stats,
+          }
         }),
       })
     }),

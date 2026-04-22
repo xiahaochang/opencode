@@ -2108,6 +2108,49 @@ export type VcsFileDiff = {
   status?: "added" | "deleted" | "modified"
 }
 
+export type GitCommit = {
+  hash: string
+  short_hash: string
+  message: string
+  author: string
+  author_date: number
+  parents: Array<string>
+  refs?: Array<string>
+}
+
+export type GitBranch = {
+  name: string
+  type: "local" | "remote"
+  commit_hash: string
+}
+
+export type GitGraphData = {
+  commits: Array<GitCommit>
+  branches: Array<GitBranch>
+  current_branch: string
+  lane_map: {
+    [key: string]: number
+  }
+}
+
+export type CommitFile = {
+  path: string
+  additions: number
+  deletions: number
+}
+
+export type CommitStats = {
+  files_changed: number
+  insertions: number
+  deletions: number
+}
+
+export type CommitDetail = {
+  hash: string
+  files: Array<CommitFile>
+  stats: CommitStats
+}
+
 export type Command = {
   name: string
   description?: string
@@ -5236,6 +5279,48 @@ export type VcsDiffResponses = {
 }
 
 export type VcsDiffResponse = VcsDiffResponses[keyof VcsDiffResponses]
+
+export type GitGraphData2 = {
+  body?: never
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+    limit?: number
+    offset?: number
+  }
+  url: "/git/graph"
+}
+
+export type GitGraphResponses = {
+  /**
+   * Git Graph data
+   */
+  200: GitGraphData
+}
+
+export type GitGraphResponse = GitGraphResponses[keyof GitGraphResponses]
+
+export type GitCommitData = {
+  body?: never
+  path: {
+    hash: string
+  }
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/git/commit/{hash}"
+}
+
+export type GitCommitResponses = {
+  /**
+   * Commit details with file changes
+   */
+  200: CommitDetail
+}
+
+export type GitCommitResponse = GitCommitResponses[keyof GitCommitResponses]
 
 export type CommandListData = {
   body?: never

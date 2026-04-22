@@ -1,5 +1,6 @@
 import type { Project, UserMessage, VcsFileDiff } from "@opencode-ai/sdk/v2"
 import { useDialog } from "@opencode-ai/ui/context/dialog"
+import { GitGraph, type GitGraphExpose, type GraphViewMode } from "@opencode-ai/ui/git-graph"
 import { useMutation } from "@tanstack/solid-query"
 import {
   batch,
@@ -10,6 +11,7 @@ import {
   createMemo,
   createEffect,
   createComputed,
+  createSignal,
   on,
   onMount,
   untrack,
@@ -69,7 +71,7 @@ type FollowupItem = FollowupDraft & { id: string }
 type FollowupEdit = Pick<FollowupItem, "id" | "prompt" | "context">
 const emptyFollowups: FollowupItem[] = []
 
-type ChangeMode = "git" | "branch" | "turn"
+type ChangeMode = "git" | "branch" | "turn" | "graph"
 type VcsMode = "git" | "branch"
 
 type SessionHistoryWindowInput = {
@@ -664,6 +666,8 @@ export default function Page() {
       list.push("branch")
     }
     list.push("turn")
+    list.push("graph")
+    console.log("[session] changesOptions:", list, { vcs: sync.project?.vcs })
     return list
   })
   const vcsMode = createMemo<VcsMode | undefined>(() => {
@@ -672,6 +676,7 @@ export default function Page() {
   const reviewDiffs = createMemo(() => {
     if (store.changes === "git") return list(vcs.diff.git)
     if (store.changes === "branch") return list(vcs.diff.branch)
+    if (store.changes === "graph") return []
     return turnDiffs()
   })
   const reviewCount = createMemo(() => reviewDiffs().length)
@@ -679,6 +684,7 @@ export default function Page() {
   const reviewReady = createMemo(() => {
     if (store.changes === "git") return vcs.ready.git
     if (store.changes === "branch") return vcs.ready.branch
+    if (store.changes === "graph") return true
     return true
   })
 
@@ -1146,6 +1152,32 @@ export default function Page() {
     const label = (option: ChangeMode) => {
       if (option === "git") return language.t("ui.sessionReview.title.git")
       if (option === "branch") return language.t("ui.sessionReview.title.branch")
+      if (option === "graph") return "GRAPH"
+      return language.t("ui.sessionReview.title.lastTurn")
+    }
+
+    return (
+      <Select
+        options={changesOptions()}
+        current={store.changes}
+        label={label}
+        onSelect={(option) => option && setStore("changes", option)}
+        variant="ghost"
+        size="small"
+        valueClass="text-14-medium"
+      />
+    )
+  }
+
+  const graphHeader = () => {
+    if (!canReview()) {
+      return null
+    }
+
+    const label = (option: ChangeMode) => {
+      if (option === "git") return language.t("ui.sessionReview.title.git")
+      if (option === "branch") return language.t("ui.sessionReview.title.branch")
+      if (option === "graph") return "GRAPH"
       return language.t("ui.sessionReview.title.lastTurn")
     }
 
@@ -1187,6 +1219,7 @@ export default function Page() {
   const reviewEmptyText = createMemo(() => {
     if (store.changes === "git") return language.t("session.review.noUncommittedChanges")
     if (store.changes === "branch") return language.t("session.review.noBranchChanges")
+    if (store.changes === "graph") return ""
     return language.t("session.review.noChanges")
   })
 
@@ -1199,6 +1232,10 @@ export default function Page() {
     if (store.changes === "turn") {
       if (nogit()) return createGit(input)
       return empty(reviewEmptyText())
+    }
+
+    if (store.changes === "graph") {
+      return null
     }
 
     return (
@@ -1214,32 +1251,82 @@ export default function Page() {
     classes?: SessionReviewTabProps["classes"]
     loadingClass: string
     emptyClass: string
-  }) => (
-    <Show when={!store.deferRender}>
-      <SessionReviewTab
-        title={changesTitle()}
-        empty={reviewEmpty(input)}
-        diffs={reviewDiffs}
-        view={view}
-        diffStyle={input.diffStyle}
-        onDiffStyleChange={input.onDiffStyleChange}
-        onScrollRef={(el) => setTree("reviewScroll", el)}
-        focusedFile={tree.activeDiff}
-        onLineComment={(comment) => addCommentToContext({ ...comment, origin: "review" })}
-        onLineCommentUpdate={updateCommentInContext}
-        onLineCommentDelete={removeCommentFromContext}
-        lineCommentActions={reviewCommentActions()}
-        commentMentions={{
-          items: file.searchFilesAndDirectories,
-        }}
-        comments={comments.all()}
-        focusedComment={comments.focus()}
-        onFocusedCommentChange={comments.setFocus}
-        onViewFile={openReviewFile}
-        classes={input.classes}
-      />
-    </Show>
-  )
+  }) => {
+    let gitGraphRef: GitGraphExpose | undefined
+    const [graphViewMode, setGraphViewMode] = createSignal<GraphViewMode>("list")
+
+    const handleViewToggle = () => {
+      console.log("[session] handleViewToggle called, current mode:", gitGraphRef?.viewMode())
+      gitGraphRef?.toggleView()
+    }
+
+    const handleRefresh = () => {
+      gitGraphRef?.refresh()
+    }
+
+    return (
+      <Show when={!store.deferRender}>
+        <Show when={store.changes !== "graph"}>
+          <SessionReviewTab
+            title={changesTitle()}
+            empty={reviewEmpty(input)}
+            diffs={reviewDiffs}
+            view={view}
+            diffStyle={input.diffStyle}
+            onDiffStyleChange={input.onDiffStyleChange}
+            onScrollRef={(el) => setTree("reviewScroll", el)}
+            focusedFile={tree.activeDiff}
+            onLineComment={(comment) => addCommentToContext({ ...comment, origin: "review" })}
+            onLineCommentUpdate={updateCommentInContext}
+            onLineCommentDelete={removeCommentFromContext}
+            lineCommentActions={reviewCommentActions()}
+            commentMentions={{
+              items: file.searchFilesAndDirectories,
+            }}
+            comments={comments.all()}
+            focusedComment={comments.focus()}
+            onFocusedCommentChange={comments.setFocus}
+            onViewFile={openReviewFile}
+            classes={input.classes}
+          />
+        </Show>
+        <Show when={store.changes === "graph"}>
+          <div class="h-full flex flex-col">
+            <div class="flex items-center justify-between px-4 py-2 border-border">
+              {graphHeader()}
+              <div class="flex items-center gap-2">
+                <button
+                  onClick={handleViewToggle}
+                  class="px-2 py-1 text-12-regular hover:bg-bg-subtle rounded"
+                  title="Toggle View"
+                >
+                  {graphViewMode() === "list" ? "🌳 Tree" : "📋 List"}
+                </button>
+                <button
+                  onClick={handleRefresh}
+                  class="px-2 py-1 text-12-regular hover:bg-bg-subtle rounded"
+                  title="Refresh"
+                >
+                  🔄
+                </button>
+              </div>
+            </div>
+            <div class="flex-1 min-h-0 overflow-hidden">
+              <GitGraph
+                ref={(ref) => (gitGraphRef = ref)}
+                client={sdk.client}
+                class="h-full"
+                onViewModeChange={(mode) => {
+                  console.log("[session] onViewModeChange:", mode)
+                  setGraphViewMode(mode)
+                }}
+              />
+            </div>
+          </div>
+        </Show>
+      </Show>
+    )
+  }
 
   const reviewPanel = () => (
     <div class="flex flex-col h-full overflow-hidden bg-background-stronger contain-strict">

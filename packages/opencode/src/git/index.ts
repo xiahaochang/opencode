@@ -46,6 +46,22 @@ export namespace Git {
     readonly deletions: number
   }
 
+  export type Commit = {
+    readonly hash: string
+    readonly short_hash: string
+    readonly message: string
+    readonly author: string
+    readonly author_date: number
+    readonly parents: string[]
+    readonly refs?: string[]
+  }
+
+  export type Branch = {
+    readonly name: string
+    readonly type: "local" | "remote"
+    readonly commit_hash: string
+  }
+
   export interface Result {
     readonly exitCode: number
     readonly text: () => string
@@ -69,6 +85,10 @@ export namespace Git {
     readonly status: (cwd: string) => Effect.Effect<Item[]>
     readonly diff: (cwd: string, ref: string) => Effect.Effect<Item[]>
     readonly stats: (cwd: string, ref: string) => Effect.Effect<Stat[]>
+    readonly log: (cwd: string, limit: number, offset?: number) => Effect.Effect<Commit[]>
+    readonly showStat: (cwd: string, hash: string) => Effect.Effect<{ files: Array<{ path: string; additions: number; deletions: number }>; stats: { files_changed: number; insertions: number; deletions: number } }>
+    readonly getBranches: (cwd: string) => Effect.Effect<Branch[]>
+    readonly getCurrentBranch: (cwd: string) => Effect.Effect<string | undefined>
   }
 
   const kind = (code: string): Kind => {
@@ -241,6 +261,122 @@ export namespace Git {
         })
       })
 
+      const log = Effect.fn("Git.log")(function* (cwd: string, limit: number = 100, offset: number = 0) {
+        // 使用更简单的格式，避免 JSON 转义问题
+        const format = "%H%x00%h%x00%s%x00%an%x00%at%x00%P%x00%D"
+        const args = [
+          "log",
+          `--format=${format}`,
+          `-n ${limit}`,
+          "--all",
+        ]
+        // 使用 --skip 参数跳过前 offset 条提交
+        if (offset > 0) {
+          args.push(`--skip=${offset}`)
+        }
+        const output = yield* text(args, { cwd })
+        const commits = output
+          .split("\n")
+          .filter(Boolean)
+          .flatMap((line) => {
+            try {
+              const parts = line.split("\0")
+              if (parts.length < 7) return []
+              return [
+                {
+                  hash: parts[0] ?? "",
+                  short_hash: parts[1] ?? "",
+                  message: parts[2] ?? "",
+                  author: parts[3] ?? "",
+                  author_date: Number.parseInt(parts[4] ?? "0", 10),
+                  parents: parts[5] ? parts[5].split(/\s+/).filter(Boolean) : [],
+                  refs: parts[6] ? parts[6].split(/,\s*/).filter(Boolean) : undefined,
+                } satisfies Commit,
+              ]
+            } catch (e) {
+              console.error("[Git.log] parse error:", e, "line:", line)
+              return []
+            }
+          })
+        return commits
+      })
+
+      const showStat = Effect.fn("Git.showStat")(function* (cwd: string, hash: string) {
+        // 获取提交的文件变更统计
+        // git show --stat --format="" <hash>
+        const output = yield* text([
+          "show",
+          "--stat",
+          "--format=",
+          hash,
+        ], { cwd })
+
+        // 解析输出，获取文件列表
+        // 格式：path/to/file | N +++---
+        const lines = output.split("\n").filter(Boolean)
+        const files: Array<{ path: string; additions: number; deletions: number }> = []
+
+        for (const line of lines) {
+          const match = line.match(/^(.+)\s+\|\s+(\d+)(\s+[+\-]+)?/)
+          if (match) {
+            const path = match[1]?.trim() ?? ""
+            const changes = match[2] ?? "0"
+            const additions = (match[3] ?? "").split("+").length - 1
+            const deletions = (match[3] ?? "").split("-").length - 1
+            files.push({
+              path,
+              additions,
+              deletions: parseInt(changes) - additions,
+            })
+          }
+        }
+
+        // 获取统计信息（最后一行）
+        const statsLine = lines[lines.length - 1]
+        const statsMatch = statsLine?.match(/(\d+) files? changed(?:,\s*(\d+) insertions?\(\+\))?(?:,\s*(\d+) deletions?\(-\))?/)
+
+        return {
+          files,
+          stats: {
+            files_changed: parseInt(statsMatch?.[1] ?? "0"),
+            insertions: parseInt(statsMatch?.[2] ?? "0"),
+            deletions: parseInt(statsMatch?.[3] ?? "0"),
+          },
+        }
+      })
+
+      const getBranches = Effect.fn("Git.getBranches")(function* (cwd: string) {
+        const local = yield* text(["branch", "--format=%(refname:short)", "--no-optional-locks"], { cwd })
+        const remote = yield* text(["branch", "-r", "--format=%(refname:short)", "--no-optional-locks"], { cwd })
+
+        const branches: Branch[] = []
+
+        local
+          .split("\n")
+          .filter(Boolean)
+          .forEach((line) => {
+            const name = line.trim()
+            if (name) branches.push({ name, type: "local" as const, commit_hash: "" })
+          })
+
+        remote
+          .split("\n")
+          .filter(Boolean)
+          .forEach((line) => {
+            const name = line.trim()
+            if (name && !name.includes("HEAD")) branches.push({ name, type: "remote" as const, commit_hash: "" })
+          })
+
+        return branches
+      })
+
+      const getCurrentBranch = Effect.fn("Git.getCurrentBranch")(function* (cwd: string) {
+        const result = yield* run(["rev-parse", "--abbrev-ref", "HEAD"], { cwd })
+        if (result.exitCode !== 0) return undefined
+        const text = out(result)
+        return text || undefined
+      })
+
       return Service.of({
         run,
         branch,
@@ -252,6 +388,10 @@ export namespace Git {
         status,
         diff,
         stats,
+        log,
+        showStat,
+        getBranches,
+        getCurrentBranch,
       })
     }),
   )
