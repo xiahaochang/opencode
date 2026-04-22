@@ -50,7 +50,6 @@ jobs:
         working-directory: .
         env:
           OPENCODE_VERSION: ${{ github.event.inputs.version || '0.0.0-custom' }}
-          OPENCODE_RELEASE: 'false'
           GH_REPO: ${{ github.repository }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
