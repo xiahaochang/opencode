@@ -25,6 +25,8 @@ jobs:
             target: x86_64-pc-windows-msvc
             platform_flag: --win
     runs-on: ${{ matrix.os }}
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v4
 
