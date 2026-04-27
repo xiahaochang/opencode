@@ -34,7 +34,8 @@ export function GitGraphBody(
               <LaneLines
                 commits={props.data?.commits || []}
                 laneMap={props.data?.lane_map || {}}
-                rowHeight={48}
+                branches={props.data?.branches ?? []}
+                rowHeight={76}
                 laneWidth={24}
               />
             </div>

@@ -2,7 +2,7 @@ import { For } from "solid-js"
 import type { LaneLinesProps } from "./types"
 
 export function LaneLines(props: LaneLinesProps) {
-  const COLORS = [
+  const BASE_COLORS = [
     "#E53935",
     "#FB8C00",
     "#FDD835",
@@ -15,67 +15,93 @@ export function LaneLines(props: LaneLinesProps) {
     "#7CB342",
   ]
 
-  const getColor = (lane: number) => COLORS[lane % COLORS.length]
-
   const lines = () => {
     const commits = props.commits
     const laneMap = props.laneMap
+    const branches = props.branches
     const laneWidth = props.laneWidth || 24
-    const rowHeight = props.rowHeight || 48
+    const rowHeight = props.rowHeight || 76
+
+    // 根据分支信息生成泳道颜色
+    const laneColors = new Map<number, string>()
+    
+    // 找出每个分支所在的泳道（根据分支的 commit_hash 找到对应的 lane）
+    branches.forEach((branch) => {
+      const branchLane = laneMap[branch.commit_hash]
+      if (branchLane !== undefined && !laneColors.has(branchLane)) {
+        // 分支所在泳道使用固定颜色
+        laneColors.set(branchLane, BASE_COLORS[branchLane % BASE_COLORS.length])
+      }
+    })
+
+    // 为所有使用的泳道分配颜色
+    const usedLanes = new Set(Object.values(laneMap))
+    usedLanes.forEach((lane) => {
+      if (!laneColors.has(lane)) {
+        laneColors.set(lane, BASE_COLORS[lane % BASE_COLORS.length])
+      }
+    })
+
+    const getColor = (lane: number) => laneColors.get(lane) ?? BASE_COLORS[lane % BASE_COLORS.length]
+
     const result: Array<{
-      x1: number
-      y1: number
-      x2: number
-      y2: number
+      d: string
       color: string
-      type: "vertical" | "curve"
     }> = []
 
+    // 收集每个泳道的 commit 索引
+    const laneCommits = new Map<number, number[]>()
+    commits.forEach((commit, index) => {
+      const lane = laneMap[commit.hash] ?? 0
+      if (!laneCommits.has(lane)) {
+        laneCommits.set(lane, [])
+      }
+      laneCommits.get(lane)!.push(index)
+    })
+
+    // 绘制每个泳道的连续垂直线
+    laneCommits.forEach((indices, lane) => {
+      const x = lane * laneWidth + laneWidth / 2
+      const firstIndex = Math.min(...indices)
+      const lastIndex = Math.max(...indices)
+      const startY = firstIndex * rowHeight + rowHeight / 2
+      const endY = lastIndex * rowHeight + rowHeight / 2
+
+      result.push({
+        d: `M ${x} ${startY} L ${x} ${endY}`,
+        color: getColor(lane),
+      })
+    })
+
+    // 绘制每个 commit 的圆点
     commits.forEach((commit, index) => {
       const lane = laneMap[commit.hash] ?? 0
       const x = lane * laneWidth + laneWidth / 2
       const y = index * rowHeight + rowHeight / 2
 
-      // 绘制向下的垂直线（连接到下一个提交）
-      if (index < commits.length - 1) {
-        result.push({
-          x1: x,
-          y1: y,
-          x2: x,
-          y2: y + rowHeight / 4,
-          color: getColor(lane),
-          type: "vertical",
-        })
-      }
+      result.push({
+        d: `M ${x} ${y - 5} L ${x} ${y + 5}`,
+        color: getColor(lane),
+      })
+    })
 
-      // 绘制到父 commit 的连线（向上连接）
+    // 绘制分支和合并的连线
+    commits.forEach((commit, index) => {
+      const lane = laneMap[commit.hash] ?? 0
+      const x = lane * laneWidth + laneWidth / 2
+      const y = index * rowHeight + rowHeight / 2
+
       commit.parents.forEach((parentHash) => {
         const parentIndex = commits.findIndex((c) => c.hash === parentHash)
-        // 父节点应该在当前节点之后（下面）
         if (parentIndex > index) {
           const parentLane = laneMap[parentHash] ?? 0
           const px = parentLane * laneWidth + laneWidth / 2
           const py = parentIndex * rowHeight + rowHeight / 2
 
-          // 如果泳道不同，绘制曲线连接
           if (parentLane !== lane) {
-            // 从当前节点向下画一小段
             result.push({
-              x1: x,
-              y1: y + rowHeight / 8,
-              x2: x,
-              y2: y + rowHeight / 3,
+              d: `M ${x} ${y} L ${px} ${y} L ${px} ${py}`,
               color: getColor(lane),
-              type: "vertical",
-            })
-            // 曲线连接到父节点
-            result.push({
-              x1: x,
-              y1: y + rowHeight / 3,
-              x2: px,
-              y2: py - rowHeight / 4,
-              color: getColor(lane),
-              type: "curve",
             })
           }
         }
@@ -87,45 +113,17 @@ export function LaneLines(props: LaneLinesProps) {
 
   return (
     <svg class="lane-lines" width="100%" height="100%">
-      {/* 绘制连接线 */}
       <For each={lines()}>
-        {(line) =>
-          line.type === "curve" ? (
-            <path
-              d={`M ${line.x1} ${line.y1} C ${line.x1} ${line.y1 + 20}, ${line.x2} ${line.y2 - 20}, ${line.x2} ${line.y2}`}
-              stroke={line.color}
-              stroke-width="3"
-              fill="none"
-            />
-          ) : (
-            <line
-              x1={line.x1}
-              y1={line.y1}
-              x2={line.x2}
-              y2={line.y2}
-              stroke={line.color}
-              stroke-width="3"
-              fill="none"
-            />
-          )
-        }
-      </For>
-
-      {/* 绘制泳道圆点 */}
-      <For each={props.commits}>
-        {(commit, index) => {
-          const lane = props.laneMap[commit.hash] ?? 0
-          const x = lane * props.laneWidth + props.laneWidth / 2
-          const y = index() * props.rowHeight + props.rowHeight / 2
-          return (
-            <circle
-              cx={x}
-              cy={y}
-              r="6"
-              fill={getColor(lane)}
-            />
-          )
-        }}
+        {(line) => (
+          <path
+            d={line.d}
+            stroke={line.color}
+            stroke-width="2"
+            fill="none"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        )}
       </For>
     </svg>
   )

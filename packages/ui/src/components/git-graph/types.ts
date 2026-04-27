@@ -65,6 +65,7 @@ export interface HoverPreviewProps {
 export interface LaneLinesProps {
   commits: GitCommit[]
   laneMap: Record<string, number>
+  branches: GitBranch[]
   rowHeight: number
   laneWidth: number
 }
