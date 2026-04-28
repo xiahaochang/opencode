@@ -84,6 +84,7 @@ export namespace Git {
     readonly show: (cwd: string, ref: string, file: string, prefix?: string) => Effect.Effect<string>
     readonly status: (cwd: string) => Effect.Effect<Item[]>
     readonly diff: (cwd: string, ref: string) => Effect.Effect<Item[]>
+    readonly diffFile: (cwd: string, ref: string, file: string) => Effect.Effect<string>
     readonly stats: (cwd: string, ref: string) => Effect.Effect<Stat[]>
     readonly log: (cwd: string, limit: number, offset?: number) => Effect.Effect<Commit[]>
     readonly showStat: (cwd: string, hash: string) => Effect.Effect<{ files: Array<{ path: string; additions: number; deletions: number }>; stats: { files_changed: number; insertions: number; deletions: number } }>
@@ -238,6 +239,50 @@ export namespace Git {
         })
       })
 
+      const diffFile = Effect.fn("Git.diffFile")(function* (cwd: string, ref: string, file: string) {
+        console.log("[Git.diffFile] called:", { cwd, ref, file })
+        
+        // 首先尝试使用 git diff 获取父 commit 和当前 commit 之间的差异
+        const diffArgs = ["diff", "--no-ext-diff", "--no-renames", "-U", `${ref}^..${ref}`, "--", file]
+        console.log("[Git.diffFile] trying diff with args:", diffArgs)
+        const diffResult = yield* text(diffArgs, { cwd }).pipe(Effect.option)
+        
+        if (diffResult._tag === "Some" && diffResult.value.trim().length > 0 && !diffResult.value.trim().startsWith("tree ")) {
+          console.log("[Git.diffFile] diff succeeded, length:", diffResult.value.length)
+          return diffResult.value
+        }
+        
+        console.log("[Git.diffFile] diff failed or returned tree, trying show")
+        
+        // 根 commit 或失败的情况，使用 git show 获取文件内容
+        const showArgs = ["show", "--no-ext-diff", "--format=", `${ref}:${file}`]
+        console.log("[Git.diffFile] trying show with args:", showArgs)
+        const showResult = yield* text(showArgs, { cwd }).pipe(Effect.option)
+        
+        if (showResult._tag === "None") {
+          console.log("[Git.diffFile] show returned none")
+          return ""
+        }
+        
+        const showValue = showResult.value
+        console.log("[Git.diffFile] show raw output (first 200 chars):", showValue.slice(0, 200))
+        
+        // 检查是否是 tree 对象（说明文件不存在于该 commit 中）
+        if (showValue.trim().startsWith("tree ")) {
+          console.log("[Git.diffFile] detected tree object - file may not exist in this commit")
+          return ""
+        }
+        
+        // 检查是否包含错误信息
+        if (showValue.includes("fatal:") || showValue.includes("does not exist")) {
+          console.log("[Git.diffFile] detected error message")
+          return ""
+        }
+        
+        console.log("[Git.diffFile] show succeeded, length:", showValue.length)
+        return showValue
+      })
+
       const stats = Effect.fn("Git.stats")(function* (cwd: string, ref: string) {
         return nuls(
           yield* text(["diff", "--no-ext-diff", "--no-renames", "--numstat", "-z", ref, "--", "."], { cwd }),
@@ -302,46 +347,49 @@ export namespace Git {
       })
 
       const showStat = Effect.fn("Git.showStat")(function* (cwd: string, hash: string) {
-        // 获取提交的文件变更统计
-        // git show --stat --format="" <hash>
-        const output = yield* text([
+        // 使用 --numstat 获取完整路径和统计（不会被截断）
+        const numstatOutput = yield* text([
           "show",
-          "--stat",
+          "--numstat",
           "--format=",
           hash,
         ], { cwd })
-
-        // 解析输出，获取文件列表
-        // 格式：path/to/file | N +++---
-        const lines = output.split("\n").filter(Boolean)
+        
+        // 解析 numstat 输出
+        // 格式：additions\tdeletions\tpath
+        const numstatLines = numstatOutput.split("\n").filter(Boolean)
         const files: Array<{ path: string; additions: number; deletions: number }> = []
-
-        for (const line of lines) {
-          const match = line.match(/^(.+)\s+\|\s+(\d+)(\s+[+\-]+)?/)
-          if (match) {
-            const path = match[1]?.trim() ?? ""
-            const changes = match[2] ?? "0"
-            const additions = (match[3] ?? "").split("+").length - 1
-            const deletions = (match[3] ?? "").split("-").length - 1
-            files.push({
-              path,
-              additions,
-              deletions: parseInt(changes) - additions,
-            })
+        
+        for (const line of numstatLines) {
+          const numstatMatch = line.match(/^(\d+|-)\s+(\d+|-)\s+(.+)$/)
+          if (numstatMatch) {
+            const additions = numstatMatch[1] === "-" ? 0 : parseInt(numstatMatch[1])
+            const deletions = numstatMatch[2] === "-" ? 0 : parseInt(numstatMatch[2])
+            const path = numstatMatch[3]?.trim() ?? ""
+            files.push({ path, additions, deletions })
           }
         }
 
-        // 获取统计信息（最后一行）
-        const statsLine = lines[lines.length - 1]
-        const statsMatch = statsLine?.match(/(\d+) files? changed(?:,\s*(\d+) insertions?\(\+\))?(?:,\s*(\d+) deletions?\(-\))?/)
+        // 获取总体统计（使用 --shortstat）
+        const statOutput = yield* text([
+          "show",
+          "--shortstat",
+          "--format=",
+          hash,
+        ], { cwd })
+        
+        const statsMatch = statOutput.match(/(\d+) files? changed(?:,\s*(\d+) insertions?\(\+\))?(?:,\s*(\d+) deletions?\(-\))?/)
+        const stats = {
+          files_changed: parseInt(statsMatch?.[1] ?? "0"),
+          insertions: parseInt(statsMatch?.[2] ?? "0"),
+          deletions: parseInt(statsMatch?.[3] ?? "0"),
+        }
+
+        console.log("[Git.showStat] returning files:", files.slice(0, 3), "stats:", stats)
 
         return {
           files,
-          stats: {
-            files_changed: parseInt(statsMatch?.[1] ?? "0"),
-            insertions: parseInt(statsMatch?.[2] ?? "0"),
-            deletions: parseInt(statsMatch?.[3] ?? "0"),
-          },
+          stats,
         }
       })
 
@@ -387,6 +435,7 @@ export namespace Git {
         show,
         status,
         diff,
+        diffFile,
         stats,
         log,
         showStat,

@@ -254,6 +254,52 @@ export const InstanceRoutes = (upgrade: UpgradeWebSocket): Hono =>
       },
     )
     .get(
+      "/git/diff/:hash",
+      describeRoute({
+        summary: "Get file diff for a commit",
+        description: "Get the diff content for a specific file in a Git commit.",
+        operationId: "git.diffFile",
+        responses: {
+          200: {
+            description: "File diff content",
+          },
+        },
+      }),
+      validator(
+        "query",
+        z.object({
+          file: z.string(),
+        }),
+      ),
+      async (c) => {
+        const hash = c.req.param("hash")
+        const query = c.req.valid("query")
+        const file = query.file
+        
+        console.log("[API /git/diff/:hash] called:", { 
+          hash, 
+          file, 
+          query,
+          url: c.req.url,
+          path: c.req.path 
+        })
+
+        try {
+          const diff = await AppRuntime.runPromise(
+            Effect.gen(function* () {
+              const vcs = yield* Vcs.Service
+              return yield* vcs.diffFile(hash, file)
+            }),
+          )
+          console.log("[API /git/diff/:hash] diff length:", diff.length)
+          return c.text(diff)
+        } catch (error) {
+          console.error("[API /git/diff/:hash] error:", error)
+          return c.text(String(error), 500)
+        }
+      },
+    )
+    .get(
       "/command",
       describeRoute({
         summary: "List commands",

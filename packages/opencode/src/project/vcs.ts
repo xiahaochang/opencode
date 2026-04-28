@@ -216,6 +216,7 @@ export namespace Vcs {
     readonly diff: (mode: Mode) => Effect.Effect<FileDiff[]>
     readonly graph: (options?: { limit?: number; offset?: number }) => Effect.Effect<GitGraphData>
     readonly commit: (hash: string) => Effect.Effect<{ hash: string; files: Array<{ path: string; additions: number; deletions: number }>; stats: { files_changed: number; insertions: number; deletions: number } }>
+    readonly diffFile: (hash: string, file: string) => Effect.Effect<string>
   }
 
   interface State {
@@ -359,6 +360,16 @@ export namespace Vcs {
             files: result.files,
             stats: result.stats,
           }
+        }),
+        diffFile: Effect.fn("Vcs.diffFile")(function* (hash: string, file: string) {
+          const dir = Instance.directory
+          log.info("Vcs.diffFile called", { dir, hash, file })
+          
+          // 使用 git show 获取文件 diff
+          const diff = yield* git.diffFile(dir, hash, file)
+          log.info("git.diffFile result length", { length: diff.length })
+          
+          return diff
         }),
       })
     }),

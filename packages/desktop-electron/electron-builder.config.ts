@@ -95,7 +95,7 @@ function getConfig() {
         appId: "ai.opencode.desktop.beta",
         productName: "OpenCode Beta",
         protocols: { name: "OpenCode Beta", schemes: ["opencode"] },
-        publish: { provider: "github", owner: "anomalyco", repo: "opencode-beta", channel: "latest" },
+        publish: { provider: "generic", url: "https://updates.example.com/beta", channel: "latest" },
         rpm: { packageName: "opencode-beta" },
       }
     }
@@ -105,7 +105,7 @@ function getConfig() {
         appId: "ai.opencode.desktop",
         productName: "OpenCode",
         protocols: { name: "OpenCode", schemes: ["opencode"] },
-        publish: { provider: "github", owner: "anomalyco", repo: "opencode", channel: "latest" },
+        publish: { provider: "generic", url: "https://updates.example.com/prod", channel: "latest" },
         rpm: { packageName: "opencode" },
       }
     }

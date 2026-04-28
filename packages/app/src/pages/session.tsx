@@ -1295,13 +1295,13 @@ export default function Page() {
             <div class="flex items-center justify-between px-4 py-2 border-border">
               {graphHeader()}
               <div class="flex items-center gap-2">
-                <button
+                {/* <button
                   onClick={handleViewToggle}
                   class="px-2 py-1 text-12-regular hover:bg-bg-subtle rounded"
                   title="Toggle View"
                 >
                   {graphViewMode() === "list" ? "🌳 Tree" : "📋 List"}
-                </button>
+                </button> */}
                 <button
                   onClick={handleRefresh}
                   class="px-2 py-1 text-12-regular hover:bg-bg-subtle rounded"
