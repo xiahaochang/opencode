@@ -86,6 +86,8 @@ function getConfig() {
         ...base,
         appId: "ai.opencode.desktop.dev",
         productName: "OpenCode Dev",
+        protocols: { name: "OpenCode Dev", schemes: ["opencode"] },
+        publish: { provider: "generic", url: "http://192.168.91.16:8080/dev" },
         rpm: { packageName: "opencode-dev" },
       }
     }
@@ -95,7 +97,7 @@ function getConfig() {
         appId: "ai.opencode.desktop.beta",
         productName: "OpenCode Beta",
         protocols: { name: "OpenCode Beta", schemes: ["opencode"] },
-        publish: { provider: "generic", url: "https://updates.example.com/beta", channel: "latest" },
+        publish: { provider: "generic", url: "http://192.168.91.16:8080/beta" },
         rpm: { packageName: "opencode-beta" },
       }
     }
@@ -105,7 +107,7 @@ function getConfig() {
         appId: "ai.opencode.desktop",
         productName: "OpenCode",
         protocols: { name: "OpenCode", schemes: ["opencode"] },
-        publish: { provider: "generic", url: "https://updates.example.com/prod", channel: "latest" },
+        publish: { provider: "generic", url: "http://192.168.91.16:8080/prod" },
         rpm: { packageName: "opencode" },
       }
     }
