@@ -73,7 +73,7 @@ const getBase = (): Configuration => ({
   linux: {
     icon: `resources/icons`,
     category: "Development",
-    target: ["AppImage", "deb", "rpm"],
+    target: ["AppImage", "deb"],
   },
 })
 
