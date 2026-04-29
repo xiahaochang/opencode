@@ -25,12 +25,17 @@ jobs:
             target: x86_64-pc-windows-msvc
             platform_flag: --win
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v4
 
       - name: Get Version from package.json
         id: version
-        run: echo "VERSION=$(node -p "require('./packages/desktop-electron/package.json').version")" >> $GITHUB_OUTPUT
+        run: |
+          VERSION=$(node -e "console.log(require('./packages/desktop-electron/package.json').version)")
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -50,18 +55,14 @@ jobs:
         run: bun install
 
       - name: Build OpenCode CLI
-        run: |
-          echo "ENV CHECK: CHANNEL=$OPENCODE_CHANNEL VERSION=$OPENCODE_VERSION"
-          bun script/build-node.ts
+        run: bun script/build-node.ts
         working-directory: packages/opencode
         env:
           OPENCODE_CHANNEL: prod
           OPENCODE_VERSION: ${{ steps.version.outputs.VERSION }}
 
       - name: Prepare Desktop App
-        run: |
-          echo "ENV CHECK: CHANNEL=$OPENCODE_CHANNEL VERSION=$OPENCODE_VERSION"
-          bun ./scripts/prepare.ts
+        run: bun ./scripts/prepare.ts
         working-directory: packages/desktop-electron
         env:
           OPENCODE_CHANNEL: prod
@@ -69,39 +70,18 @@ jobs:
 
       - name: Build Electron App
         run: |
-          echo "ENV CHECK: CHANNEL=$OPENCODE_CHANNEL VERSION=$OPENCODE_VERSION"
           rm -rf out || true
           bun run build
         working-directory: packages/desktop-electron
-        shell: bash
         env:
           OPENCODE_CHANNEL: prod
           OPENCODE_VERSION: ${{ steps.version.outputs.VERSION }}
 
       - name: Verify Build Output
         working-directory: packages/desktop-electron
-        shell: bash
         run: |
           echo "=== Checking output directory ==="
-          if [ ! -d "out" ]; then
-            echo "Error: 'out' directory does not exist!"
-            exit 1
-          fi
-          
-          if [ ! -f "out/main/index.js" ]; then
-            echo "Error: 'out/main/index.js' is missing!"
-            echo "=== Full output tree ==="
-            ls -R out/
-            exit 1
-          fi
-          
-          echo "=== File details ==="
-          ls -la out/main/index.js
-          echo "=== Content preview (first 10 lines) ==="
-          head -n 10 out/main/index.js
-          
-          find . -name ".gitignore" -type f -delete
-          echo "Removed .gitignore files to ensure packing"
+          ls -la out/main/index.js || exit 1
 
       - name: Package Electron
         run: npx electron-builder ${{ matrix.platform_flag }} --publish never --config electron-builder.config.ts --config.asar=false
@@ -134,7 +114,7 @@ jobs:
 
       - name: Get Version
         id: version
-        run: echo "VERSION=$(node -p "require('./packages/desktop-electron/package.json').version")" >> $GITHUB_OUTPUT
+        run: echo "VERSION=$(node -e "console.log(require('./packages/desktop-electron/package.json').version)")" >> $GITHUB_OUTPUT
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
