@@ -1,56 +1,134 @@
-# desktop-electron 自动升级机制全面分析
+# OpenCode 检查更新实现流程分析
 
-## 1. 概述
+## 概述
 
-desktop-electron 项目使用 **electron-updater**（基于 electron-builder 的更新方案）实现自动升级功能。整个升级流程涵盖：更新检查 → 下载 → 提示用户 → 安装重启，支持 GitHub Releases 作为更新源。
+OpenCode 使用 `electron-updater` 库实现桌面应用的自动更新功能。更新检查流程涉及 UI 层、Preload 桥接层和 Main Process 三层架构。
 
-## 2. 技术栈
+## 架构层次
 
-| 组件 | 版本 | 作用 |
-|------|------|------|
-| electron-updater | ^6 | 核心自动升级库 |
-| electron-builder | ^26 | 打包 + 生成 latest.yml |
-| electron | 40.4.1 | Electron 框架 |
+### 1. UI 层 (`packages/app/src/components/settings-general.tsx:110-139`)
 
-## 3. 核心架构
-
-### 3.1 目录结构（更新相关）
-
-```
-packages/desktop-electron/
-├── src/
-│   ├── main/
-│   │   ├── index.ts          # 主进程：升级核心逻辑
-│   │   ├── constants.ts      # UPDATER_ENABLED 开关
-│   │   ├── ipc.ts            # IPC 通信：暴露升级 API
-│   │   └── menu.ts           # 菜单：Check for Updates 入口
-│   ├── preload/
-│   │   ├── index.ts          # 预加载：暴露 window.api
-│   │   └── types.ts          # 类型定义
-│   └── renderer/
-│       └── updater.ts        # 渲染进程：升级 UI 调用
-├── electron-builder.config.ts # 打包配置：publish 配置
-├── scripts/
-│   └── finalize-latest-yml.ts # CI 脚本：合并多架构 yml
-└── package.json              # 依赖声明
-```
-
-### 3.2 更新开关控制
-
-**文件**: `src/main/constants.ts:10`
+用户点击"检查更新"按钮后触发 `check()` 函数：
 
 ```ts
-export const UPDATER_ENABLED = app.isPackaged && CHANNEL !== "dev"
+const check = () => {
+  if (!platform.checkUpdate) return
+  setStore("checking", true)
+
+  void platform
+    .checkUpdate()
+    .then((result) => {
+      if (!result.updateAvailable) {
+        showToast({
+          variant: "success",
+          icon: "circle-check",
+          title: language.t("settings.updates.toast.latest.title"),
+          description: language.t("settings.updates.toast.latest.description", { version: platform.version ?? "" }),
+        })
+        return
+      }
+
+      const actions =
+        platform.update && platform.restart
+          ? [
+              {
+                label: language.t("toast.update.action.installRestart"),
+                onClick: async () => {
+                  await platform.update!()
+                  await platform.restart!()
+                },
+              },
+              {
+                label: language.t("toast.update.action.notYet"),
+                onClick: "dismiss" as const,
+              },
+            ]
+          : undefined
+
+      showToast({
+        variant: "success",
+        icon: "arrow-down-to-line",
+        title: language.t("settings.updates.toast.available.title"),
+        description: language.t("settings.updates.toast.available.description", { version: result.version ?? "" }),
+        actions,
+      })
+    })
+    .finally(() => {
+      setStore("checking", false)
+    })
+}
 ```
 
-- 仅在 **已打包应用** 且 **非 dev 频道** 时启用更新
-- dev 环境（本地开发）不会触发更新检查
+**关键点：**
+- 调用前设置 `store.checking = true` 显示加载状态
+- 按钮禁用条件：`disabled={store.checking || !platform.checkUpdate}`
+- 根据返回结果显示不同的 toast 提示
+- 有更新时提供"安装并重启"和"稍后"两个选项
 
-## 4. 自动升级完整流程
+### 2. Preload 桥接层 (`packages/desktop-electron/src/preload/index.ts:64`)
 
-### 4.1 初始化配置
+```ts
+checkUpdate: () => ipcRenderer.invoke("check-update"),
+```
 
-**文件**: `src/main/index.ts:304-318`
+将渲染进程的调用通过 IPC 转发到主进程。
+
+### 3. Main Process IPC 处理 (`packages/desktop-electron/src/main/ipc.ts:58`)
+
+```ts
+ipcMain.handle("check-update", () => deps.checkUpdate())
+```
+
+注册 IPC 处理函数，调用实际的 `checkUpdate` 函数。
+
+### 4. 核心更新逻辑 (`packages/desktop-electron/src/main/index.ts:322-356`)
+
+```ts
+async function checkUpdate() {
+  if (!UPDATER_ENABLED) return { updateAvailable: false }
+  updateReady = false
+  
+  logger.log("checking for updates", {
+    currentVersion: app.getVersion(),
+    channel: autoUpdater.channel,
+    allowPrerelease: autoUpdater.allowPrerelease,
+    allowDowngrade: autoUpdater.allowDowngrade,
+  })
+  
+  try {
+    const result = await autoUpdater.checkForUpdates()
+    const updateInfo = result?.updateInfo
+    
+    logger.log("update metadata fetched", {
+      releaseVersion: updateInfo?.version ?? null,
+      releaseDate: updateInfo?.releaseDate ?? null,
+      releaseName: updateInfo?.releaseName ?? null,
+      files: updateInfo?.files?.map((file) => file.url) ?? [],
+    })
+    
+    const version = result?.updateInfo?.version
+    if (result?.isUpdateAvailable === false || !version) {
+      logger.log("no update available", {
+        reason: "provider returned no newer version",
+      })
+      return { updateAvailable: false }
+    }
+    
+    logger.log("update available", { version })
+    await autoUpdater.downloadUpdate()
+    logger.log("update download completed", { version })
+    updateReady = true
+    return { updateAvailable: true, version }
+  } catch (error) {
+    logger.error("update check failed", error)
+    return { updateAvailable: false, failed: true }
+  }
+}
+```
+
+## 更新判断机制
+
+### Auto Updater 配置 (`packages/desktop-electron/src/main/index.ts:304-318`)
 
 ```ts
 function setupAutoUpdater() {
@@ -59,292 +137,162 @@ function setupAutoUpdater() {
   autoUpdater.channel = "latest"
   autoUpdater.allowPrerelease = false
   autoUpdater.allowDowngrade = true
-  autoUpdater.autoDownload = false        // 不自动下载，需用户确认
-  autoUpdater.autoInstallOnAppQuit = true  // 退出时自动安装
+  autoUpdater.autoDownload = false
+  autoUpdater.autoInstallOnAppQuit = true
 }
 ```
 
-**关键配置说明**:
+**配置说明：**
+- `channel = "latest"`：使用最新稳定版渠道
+- `allowPrerelease = false`：不更新到预发布版本
+- `allowDowngrade = true`：允许降级（特殊情况下有用）
+- `autoDownload = false`：不自动下载（但 `checkUpdate()` 函数内部手动调用了 `downloadUpdate()`）
+- `autoInstallOnAppQuit = true`：应用退出时自动安装已下载的更新
 
-| 配置项 | 值 | 含义 |
-|--------|-----|------|
-| channel | "latest" | 使用 latest 频道（对应 GitHub Release） |
-| allowPrerelease | false | 不检查预发布版本 |
-| allowDowngrade | true | 允许降级安装 |
-| autoDownload | false | 检测到更新后不自动下载（需手动触发） |
-| autoInstallOnAppQuit | true | 应用退出时自动安装已下载的更新 |
+### 版本比较逻辑
 
-### 4.2 升级检查流程
+`autoUpdater.checkForUpdates()` 内部流程：
 
-**入口**: `src/main/index.ts:322-356`
+1. **请求 manifest 文件**：根据配置从更新服务器获取 `{url}/latest.yml`（或对应平台的 manifest 文件）
+2. **解析版本信息**：manifest 包含最新版本的版本号、文件哈希、下载地址等
+3. **版本比较**：`electron-updater` 内部使用 **semver 比较** 将 `app.getVersion()` 与 manifest 中的版本号对比
+4. **判断结果**：
+   - `result.isUpdateAvailable = true`：服务器版本更新
+   - `result.isUpdateAvailable = false`：当前已是最新或服务器版本更旧
+   - 由于 `allowDowngrade = true`，即使服务器版本更低也视为可用更新
 
-```
-用户触发检查
-     ↓
-checkForUpdates(alertOnFail)
-     ↓
-checkUpdate()
-     ↓
-autoUpdater.checkForUpdates()  ← 请求 GitHub Releases
-     ↓
-比较版本号
-     ↓
-[有更新] → autoUpdater.downloadUpdate() → 下载完成 → updateReady = true
-     ↓
-[无更新] → 返回 { updateAvailable: false }
-     ↓
-[出错]   → 返回 { updateAvailable: false, failed: true }
-```
-
-**核心代码**:
+### 更新服务器配置 (`packages/desktop-electron/electron-builder.config.ts:90-110`)
 
 ```ts
-async function checkUpdate() {
-  if (!UPDATER_ENABLED) return { updateAvailable: false }
-  updateReady = false
-  try {
-    const result = await autoUpdater.checkForUpdates()
-    const version = result?.updateInfo?.version
-    if (result?.isUpdateAvailable === false || !version) {
-      return { updateAvailable: false }
+switch (channel) {
+  case "dev": {
+    return {
+      ...base,
+      publish: { provider: "generic", url: "http://192.168.91.16:8080/dev" },
     }
-    await autoUpdater.downloadUpdate()     // 检查到更新后立即下载
+  }
+  case "beta": {
+    return {
+      ...base,
+      publish: { provider: "generic", url: "http://192.168.91.16:8080/beta" },
+    }
+  }
+  case "prod": {
+    return {
+      ...base,
+      publish: { provider: "generic", url: "http://192.168.91.16:8080/prod" },
+    }
+  }
+}
+```
+
+**关键点：**
+- 使用 `generic` provider：简单的 HTTP 文件服务器
+- 三个 channel（dev/beta/prod）对应不同 URL 路径
+- 更新服务器地址：`http://192.168.91.16:8080/{channel}`
+
+### 更新启用条件 (`packages/desktop-electron/src/main/constants.ts:10`)
+
+```ts
+export const UPDATER_ENABLED = app.isPackaged && CHANNEL !== "dev"
+```
+
+**含义：**
+- 必须打包后的应用（`app.isPackaged = true`）
+- 不能是 dev channel（开发版本不启用更新）
+
+## 完整流程图
+
+```
+用户点击"检查更新"按钮
+    ↓
+check() 函数 [settings-general.tsx:110]
+    ↓ 设置 store.checking = true
+    ↓
+platform.checkUpdate()
+    ↓ (Preload 桥接层)
+    ↓ ipcRenderer.invoke("check-update")
+    ↓
+Main Process checkUpdate() [main/index.ts:322]
+    ↓
+autoUpdater.checkForUpdates()
+    ↓ 请求 http://192.168.91.16:8080/{channel}/latest.yml
+    ↓ 解析 manifest，获取服务器版本号
+    ↓ 比较版本号 (semver 比较)
+    ↓ 判断 isUpdateAvailable
+    ↓
+┌──────────────────────────────────────────┐
+│ result.isUpdateAvailable 判断             │
+└──────────────┬──────────────────┬────────┘
+               │ true             │ false
+               ↓                  ↓
+    await autoUpdater.downloadUpdate()
+               ↓                  返回 { updateAvailable: false }
+    下载更新包（根据 manifest 中的文件列表）
+               ↓
     updateReady = true
-    return { updateAvailable: true, version }
-  } catch (error) {
-    return { updateAvailable: false, failed: true }
-  }
-}
+    返回 { updateAvailable: true, version }
+               ↓
+    UI 层收到结果
+               ↓
+    ┌──────────────────────────────────────┐
+    │ 显示 toast 提示                       │
+    ├─────────────────┬────────────────────┤
+    │ 有更新          │ 无更新/失败         │
+    │ 显示版本号      │ 显示"已是最新"      │
+    │ 提供操作按钮    │                    │
+    └────────┬────────┘                    │
+             │                             │
+    ┌────────┴────────┐                    │
+    │ 用户选择         │                    │
+    ├─────────────────┼────────────────────┤
+    │ 安装并重启       │ 稍后               │
+    │ platform.update │ dismiss            │
+    │ ↓                │                    │
+    │ platform.restart │                    │
+    │ ↓                │                    │
+    │ installUpdate()  │                    │
+    │ ↓                │                    │
+    │ autoUpdater      │                    │
+    │ .quitAndInstall()│                    │
+    └─────────────────┘                    │
 ```
 
-### 4.3 安装更新流程
+## 更新安装流程
 
-**文件**: `src/main/index.ts:358-362`
+在 `settings-general.tsx:127-139` 中，如果有更新可用：
 
-```ts
-async function installUpdate() {
-  if (!updateReady) return
-  killSidecar()                  // 先关闭 sidecar 进程
-  autoUpdater.quitAndInstall()   // 退出并安装更新
-}
-```
+1. 显示 toast，提供"安装并重启"按钮
+2. 点击后先调用 `platform.update()`：
+   ```ts
+   async function installUpdate() {
+     if (!updateReady) return
+     killSidecar()
+     autoUpdater.quitAndInstall()
+   }
+   ```
+3. 再调用 `platform.restart()` 退出应用
+4. `autoInstallOnAppQuit = true` 确保退出时自动安装已下载的更新
 
-安装时会弹出对话框让用户选择：
+## 关键文件路径索引
 
-```ts
-const response = await dialog.showMessageBox({
-  message: `Update ${result.version} downloaded. Restart now?`,
-  buttons: ["Restart", "Later"],
-  defaultId: 0,
-  cancelId: 1,
-})
-```
+| 功能 | 文件路径 | 行号 |
+|------|----------|------|
+| UI 层检查逻辑 | `packages/app/src/components/settings-general.tsx` | 110-139, 520-524 |
+| Preload 桥接 | `packages/desktop-electron/src/preload/index.ts` | 64 |
+| IPC 注册 | `packages/desktop-electron/src/main/ipc.ts` | 58 |
+| 核心更新函数 | `packages/desktop-electron/src/main/index.ts` | 322-356 |
+| Auto Updater 配置 | `packages/desktop-electron/src/main/index.ts` | 304-318 |
+| 更新启用条件 | `packages/desktop-electron/src/main/constants.ts` | 10 |
+| 更新服务器配置 | `packages/desktop-electron/electron-builder.config.ts` | 90-110 |
+| 安装更新函数 | `packages/desktop-electron/src/main/index.ts` | 358-362 |
 
-- **Restart**: 立即调用 `installUpdate()` 重启安装
-- **Later**: 延迟安装（依赖 `autoInstallOnAppQuit = true`，退出时自动安装）
+## 注意事项
 
-### 4.4 完整调用链路
+1. **自动下载**：虽然配置了 `autoDownload = false`，但 `checkUpdate()` 函数内部主动调用了 `downloadUpdate()`，所以实际上是检查到更新就立即下载。
 
-```
-渲染进程                          预加载层                        主进程
-─────────                         ───────                        ──────
-window.api.runUpdater()
-        ↓ (IPC invoke)
-                              runUpdater(alertOnFail)
-                                        ↓ (IPC handle)
-                                        checkForUpdates(alertOnFail)
-                                                ↓
-                                        checkUpdate()
-                                                ↓
-                                        autoUpdater.checkForUpdates()
-                                                ↓
-                                        autoUpdater.downloadUpdate()
-                                                ↓
-                                        dialog.showMessageBox()
-                                                ↓
-                                        installUpdate()
-                                                ↓
-                                        autoUpdater.quitAndInstall()
-```
+2. **更新服务器**：当前配置的是内部服务器 `http://192.168.91.16:8080`，生产环境需要修改为公开的 CDN 或 GitHub Releases。
 
-## 5. IPC 通信层
+3. **Channel 区分**：开发版本（dev channel）不会启用更新功能，避免开发过程中误更新。
 
-### 5.1 预加载层暴露的 API
-
-**文件**: `src/preload/index.ts:63-65`
-
-```ts
-runUpdater: (alertOnFail) => ipcRenderer.invoke("run-updater", alertOnFail),
-checkUpdate: () => ipcRenderer.invoke("check-update"),
-installUpdate: () => ipcRenderer.invoke("install-update"),
-```
-
-### 5.2 主进程 IPC 处理
-
-**文件**: `src/main/ipc.ts:57-59`
-
-```ts
-ipcMain.handle("run-updater", (_event, alertOnFail) => deps.runUpdater(alertOnFail))
-ipcMain.handle("check-update", () => deps.checkUpdate())
-ipcMain.handle("install-update", () => deps.installUpdate())
-```
-
-## 6. 打包与发布配置
-
-### 6.1 electron-builder 配置
-
-**文件**: `electron-builder.config.ts`
-
-| 频道 | appId | publish 仓库 | channel |
-|------|-------|-------------|---------|
-| dev | ai.opencode.desktop.dev | — | — |
-| beta | ai.opencode.desktop.beta | anomalyco/opencode-beta | latest |
-| prod | ai.opencode.desktop | anomalyco/opencode | latest |
-
-**beta 和 prod 配置**:
-
-```ts
-publish: { provider: "github", owner: "anomalyco", repo: "opencode", channel: "latest" }
-```
-
-### 6.2 多平台打包目标
-
-| 平台 | 目标格式 |
-|------|---------|
-| macOS | dmg + zip |
-| Windows | nsis（交互式安装） |
-| Linux | AppImage + deb + rpm |
-
-### 6.3 latest.yml 合并脚本
-
-**文件**: `scripts/finalize-latest-yml.ts`
-
-CI 构建时为不同架构生成独立的 `latest.yml`，该脚本将其合并：
-
-- **Windows**: 合并 arm64 + x64 到统一的 `latest.yml`
-- **macOS**: 合并 arm64 + x64 到 `latest-mac.yml`
-- **Linux**: x64 → `latest-linux.yml`，arm64 → `latest-linux-arm64.yml`
-
-合并后上传到 GitHub Release：
-
-```ts
-await $`gh release upload ${tag} ${filepath} --clobber --repo ${repo}`
-```
-
-## 7. 菜单入口
-
-**文件**: `src/main/menu.ts:22-25`
-
-macOS 应用菜单中的升级入口：
-
-```ts
-{
-  label: "Check for Updates...",
-  enabled: UPDATER_ENABLED,
-  click: () => deps.checkForUpdates(),
-}
-```
-
-## 8. 渲染进程调用
-
-**文件**: `src/renderer/updater.ts`
-
-```ts
-export const UPDATER_ENABLED = () => window.__OPENCODE__?.updaterEnabled ?? false
-
-export async function runUpdater({ alertOnFail }: { alertOnFail: boolean }) {
-  await initI18n()
-  try {
-    await window.api.runUpdater(alertOnFail)
-  } catch {
-    if (alertOnFail) {
-      window.alert(t("desktop.updater.checkFailed.message"))
-    }
-  }
-}
-```
-
-## 9. 更新源解析流程
-
-```
-electron-updater
-    ↓
-读取 publish 配置 (provider: "github")
-    ↓
-请求 GitHub Releases API
-    ↓
-下载 latest.yml / latest-mac.yml / latest-linux.yml
-    ↓
-解析文件中的版本信息、下载 URL、SHA512 校验和
-    ↓
-对比当前应用版本 (app.getVersion())
-    ↓
-决定是否有可用更新
-```
-
-## 10. 关键特性总结
-
-| 特性 | 实现方式 |
-|------|---------|
-| 更新源 | GitHub Releases（electron-builder publish 配置） |
-| 版本校验 | SHA512 校验和（latest.yml 中声明） |
-| 更新检查 | `autoUpdater.checkForUpdates()` |
-| 下载策略 | 手动触发（autoDownload: false），检查后立即下载 |
-| 安装策略 | 用户确认重启 或 退出时自动安装 |
-| 频道控制 | dev 禁用，beta/prod 启用 |
-| 降级支持 | allowDowngrade: true |
-| 预发布版本 | 不检查（allowPrerelease: false） |
-| 多架构支持 | CI 合并 latest.yml，统一分发 |
-| 代码签名 | macOS 公证 + Windows signtool |
-
-## 11. 流程时序图
-
-```
-用户点击 "Check for Updates"
-         │
-         ▼
-┌─────────────────────────┐
-│  menu.ts: checkForUpdates│
-└──────────┬──────────────┘
-           │
-           ▼
-┌──────────────────────────┐
-│  main/index.ts:           │
-│  checkForUpdates()        │◄── alertOnFail 控制错误提示
-└──────────┬───────────────┘
-           │
-           ▼
-┌──────────────────────────┐
-│  checkUpdate()            │
-│  1. autoUpdater.          │
-│     checkForUpdates()     │
-│  2. 比较版本号             │
-│  3. 有更新 → 下载         │
-│  4. autoUpdater.          │
-│     downloadUpdate()      │
-└──────────┬───────────────┘
-           │
-           ▼
-┌──────────────────────────┐
-│  dialog.showMessageBox()  │
-│  "Update X downloaded.    │
-│   Restart now?"           │
-│  [Restart]  [Later]       │
-└──────────┬───────────────┘
-           │
-    ┌──────┴──────┐
-    │             │
-    ▼             ▼
-┌────────┐  ┌──────────────┐
-│Restart │  │Later (退出时  │
-│        │  │ autoInstall  │
-└───┬────┘  │    OnAppQuit │
-    │       └──────────────┘
-    ▼
-┌──────────────────────────┐
-│  installUpdate()          │
-│  1. killSidecar()         │
-│  2. autoUpdater.          │
-│     quitAndInstall()      │
-└───────────────────────────┘
-```
+4. **错误处理**：更新检查失败时会返回 `{ updateAvailable: false, failed: true }`，UI 层需要据此显示适当的错误提示（当前实现中似乎没有处理 `failed` 情况）。
