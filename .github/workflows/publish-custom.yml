@@ -50,14 +50,18 @@ jobs:
         run: bun install
 
       - name: Build OpenCode CLI
-        run: bun script/build-node.ts
+        run: |
+          echo "ENV CHECK: CHANNEL=$OPENCODE_CHANNEL VERSION=$OPENCODE_VERSION"
+          bun script/build-node.ts
         working-directory: packages/opencode
         env:
           OPENCODE_CHANNEL: prod
           OPENCODE_VERSION: ${{ steps.version.outputs.VERSION }}
 
       - name: Prepare Desktop App
-        run: bun ./scripts/prepare.ts
+        run: |
+          echo "ENV CHECK: CHANNEL=$OPENCODE_CHANNEL VERSION=$OPENCODE_VERSION"
+          bun ./scripts/prepare.ts
         working-directory: packages/desktop-electron
         env:
           OPENCODE_CHANNEL: prod
@@ -65,7 +69,7 @@ jobs:
 
       - name: Build Electron App
         run: |
-          # Clean build output to avoid stale files
+          echo "ENV CHECK: CHANNEL=$OPENCODE_CHANNEL VERSION=$OPENCODE_VERSION"
           rm -rf out || true
           bun run build
         working-directory: packages/desktop-electron
@@ -96,8 +100,6 @@ jobs:
           echo "=== Content preview (first 10 lines) ==="
           head -n 10 out/main/index.js
           
-          # Remove .gitignore files to ensure electron-builder packs everything
-          # electron-builder sometimes ignores files listed in .gitignore even if specified in 'files'
           find . -name ".gitignore" -type f -delete
           echo "Removed .gitignore files to ensure packing"
 
